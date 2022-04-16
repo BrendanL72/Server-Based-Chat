@@ -2,9 +2,14 @@ import java.io.IOException;
 import java.net.Socket;
 
 /*
-User is the client-side part of the chat. 
-User connects to the server and communicates with it using various messages 
-Note: for local testing, client will connect the localhost as the host 
+   User is the client-side part of the chat. 
+   User connects to the server and communicates with it using various messages 
+   Note: for local testing, client will connect the localhost as the host 
+
+   Features:
+   Chat History
+   Security
+   
 */
 
 import java.io.*;
@@ -29,4 +34,5 @@ public class User {
       }
       
    }
+
 }

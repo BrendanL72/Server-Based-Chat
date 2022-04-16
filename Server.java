@@ -1,3 +1,9 @@
+/*
+   Server handles the various concurrent connections initiated by any number of clients.
+   It does this by creating a thread for each connection initiated. 
+   The thread will handle all messages to be sent and received by the client.
+*/
+
 import java.util.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -23,7 +29,7 @@ public class Server {
          while (true) {
             Socket newClient = socket.accept();
             System.out.println("New client connected");
-            //generate new client ID and secret key
+            //generate new client ID and secret key using hashing algo
             int newID = (int) Math.floor(Math.random() * MAX_ID);
             int newSecretKey = (int) Math.floor(Math.random() * MAX_SECRET_KEY);
             ID_keys.put(newID, newSecretKey);

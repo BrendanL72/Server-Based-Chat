@@ -1,6 +1,6 @@
 /*
-Connection is created by the server when a new client connects to the server.
-A new thread is created to handle each connection.
+   Connection is created by the server when a new client connects to the server.
+   A new thread is created to handle each connection.
 */
 
 public class Connection implements Runnable{
