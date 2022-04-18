@@ -5,8 +5,8 @@
 */
 
 import java.util.*;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
+import java.nio.charset.Charset;
 
 public class Server {
 
@@ -24,27 +24,53 @@ public class Server {
       } 
       int portNumber = Integer.parseInt(args[0]);
 
+      //set up server
       try {
-         ServerSocket socket = new ServerSocket(portNumber);
-         while (true) {
-            Socket newClient = socket.accept();
-            System.out.println("New client connected");
-            //generate new client ID and secret key using hashing algo
-            int newID = (int) Math.floor(Math.random() * MAX_ID);
-            int newSecretKey = (int) Math.floor(Math.random() * MAX_SECRET_KEY);
-            ID_keys.put(newID, newSecretKey);
+         DatagramSocket serverSocket = new DatagramSocket(portNumber);
+         printServerInfo(serverSocket);
 
-            //create new client object to run
-            Connection newConnection = new Connection(newID, newSecretKey);
+         byte[] inBuf = new byte[512];
+         byte[] outBuf = new byte[512];
 
-            //run client object on thread
-            Thread clientThread = new Thread(newConnection);
+         DatagramPacket receivedPacket;
+         DatagramPacket sendPacket;
+         
+         while (new String(inBuf, Charset.forName("UTF-8")).equals("END")) {
+            receivedPacket = new DatagramPacket(inBuf, inBuf.length);
+            serverSocket.receive(receivedPacket);
+
+            //get information from packet to send to client
+            InetAddress receivedAddress = receivedPacket.getAddress();
+            int receivedPort = receivedPacket.getPort();
+
+            //determine what to send them, for now it just returns what they send
+            outBuf = inBuf;
+
+            sendPacket = new DatagramPacket(outBuf, outBuf.length, receivedAddress, receivedPort);
+            serverSocket.send(sendPacket);
          }
 
-         socket.close();
+         serverSocket.close();
 
       } catch (Exception e) {
          //TODO: handle exception
       }
    }
+
+   //simple debugging method that prints the server info
+   private static void printServerInfo(DatagramSocket serverSocket) {
+      InetAddress serverIP = serverSocket.getInetAddress();
+      int portNum = serverSocket.getLocalPort();
+
+      System.out.println("Server created under: " + serverIP + " " + portNum);
+   }
+
+   //simple debugging method that prints any client that connects to the socket unoffically
+   private static void printClientInfo(Socket client) {
+      InetAddress clientIP = client.getInetAddress();
+      System.out.println("New client connected from: " + clientIP);
+      
+   }
+
+   
 }
