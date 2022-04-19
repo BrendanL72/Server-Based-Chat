@@ -18,31 +18,30 @@ public class Server {
       Hashtable<Integer, Integer> ID_keys = new Hashtable<>();
 
       //get port number from command line arguments
-      if (args.length != 2) {
-         System.err.println("Try java Server <ip> <port number>");
-         System.exit(1);
-      } 
-      
-      int portNumber = Integer.parseInt(args[1]);
+      final int portNumber = 4445;
       //set up server
       try {
-         InetAddress IPaddress = InetAddress.getByName(args[0]);
-         DatagramSocket serverSocket = new DatagramSocket(portNumber, IPaddress);
+         DatagramSocket serverSocket = new DatagramSocket(portNumber);
          printServerInfo(serverSocket);
-
-         byte[] inBuf = new byte[512];
-         byte[] outBuf = new byte[512];
 
          DatagramPacket receivedPacket;
          DatagramPacket sendPacket;
+
+         byte[] inBuf = new byte[512];
          
          while (!byteToString(inBuf).equals("END")) {
+            inBuf = new byte[512];
+            byte[] outBuf = new byte[512];
+            //System.out.println("Looking for packets...");
             receivedPacket = new DatagramPacket(inBuf, inBuf.length);
             serverSocket.receive(receivedPacket);
 
             //get information from packet to send to client
             InetAddress receivedAddress = receivedPacket.getAddress();
             int receivedPort = receivedPacket.getPort();
+            System.out.println("Packet received from: " + receivedAddress + ":" + receivedPort);
+
+            System.out.println(byteToString(inBuf));
 
             //determine what to send them, for now it just returns what they send
             outBuf = inBuf;
@@ -68,7 +67,7 @@ public class Server {
       InetAddress serverIP = serverSocket.getLocalAddress();
       int portNum = serverSocket.getLocalPort();
 
-      System.out.println("Server created under: " + serverIP + " " + portNum);
+      System.out.println("Server created under: " + serverIP + ":" + portNum);
    }
 
    //simple debugging method that prints any client that connects to the socket unoffically
