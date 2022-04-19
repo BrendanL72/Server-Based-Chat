@@ -77,7 +77,8 @@ public class User {
    }
 
    private static String byteToString(byte[] buf) {
-      return new String(buf, Charset.forName("UTF-8"));
+      String convert = new String(buf, Charset.forName("UTF-8"));
+      return convert.trim();
    }
 
 }

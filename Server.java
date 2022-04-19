@@ -29,7 +29,7 @@ public class Server {
 
          byte[] inBuf = new byte[512];
          
-         while (!byteToString(inBuf).equals("END")) {
+         while (!(byteToString(inBuf).equals("END"))) {
             inBuf = new byte[512];
             byte[] outBuf = new byte[512];
             //System.out.println("Looking for packets...");
@@ -59,7 +59,8 @@ public class Server {
 
    //simple byte array to string conversion under UTF-8 format
    private static String byteToString(byte[] buf) {
-      return new String(buf, Charset.forName("UTF-8"));
+      String convert = new String(buf, Charset.forName("UTF-8"));
+      return convert.trim();
    }
 
    //simple debugging method that prints the server info
