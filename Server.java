@@ -18,15 +18,16 @@ public class Server {
       Hashtable<Integer, Integer> ID_keys = new Hashtable<>();
 
       //get port number from command line arguments
-      if (args.length != 1) {
-         System.err.println("Try java Server <port number>");
+      if (args.length != 2) {
+         System.err.println("Try java Server <ip> <port number>");
          System.exit(1);
       } 
-      int portNumber = Integer.parseInt(args[0]);
-
+      
+      int portNumber = Integer.parseInt(args[1]);
       //set up server
       try {
-         DatagramSocket serverSocket = new DatagramSocket(portNumber);
+         InetAddress IPaddress = InetAddress.getByName(args[0]);
+         DatagramSocket serverSocket = new DatagramSocket(portNumber, IPaddress);
          printServerInfo(serverSocket);
 
          byte[] inBuf = new byte[512];
@@ -35,7 +36,7 @@ public class Server {
          DatagramPacket receivedPacket;
          DatagramPacket sendPacket;
          
-         while (new String(inBuf, Charset.forName("UTF-8")).equals("END")) {
+         while (!byteToString(inBuf).equals("END")) {
             receivedPacket = new DatagramPacket(inBuf, inBuf.length);
             serverSocket.receive(receivedPacket);
 
@@ -57,9 +58,14 @@ public class Server {
       }
    }
 
+   //simple byte array to string conversion under UTF-8 format
+   private static String byteToString(byte[] buf) {
+      return new String(buf, Charset.forName("UTF-8"));
+   }
+
    //simple debugging method that prints the server info
    private static void printServerInfo(DatagramSocket serverSocket) {
-      InetAddress serverIP = serverSocket.getInetAddress();
+      InetAddress serverIP = serverSocket.getLocalAddress();
       int portNum = serverSocket.getLocalPort();
 
       System.out.println("Server created under: " + serverIP + " " + portNum);

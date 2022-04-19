@@ -16,8 +16,8 @@ public class User {
    
    public static void main(String[] args) {
       //format: java User <ip> <port>
-      if (args.length != 2) { 
-         System.out.println("try java User <ip> <port>");
+      if (args.length != 3) { 
+         System.out.println("try java User <self port> <dest ip> <dest port>");
          System.exit(1);
       }
 
@@ -28,14 +28,23 @@ public class User {
       byte[] outBuf = new byte[512];
 
       try {
-         InetAddress IPaddress = InetAddress.getByName(args[0]);
-         int portNumber = Integer.parseInt(args[1]);
+         int portNumber = Integer.parseInt(args[0]);
+         InetAddress IPaddress = InetAddress.getLocalHost();
+
+         InetAddress destIPaddress = InetAddress.getByName(args[1]);
+         int destPortNumber = Integer.parseInt(args[2]);
+         //create a new socket to send and receive data
          DatagramSocket clientSocket = new DatagramSocket(portNumber, IPaddress);
+         printSocketInfo(clientSocket);
 
          //send HELLO
          inBuf = "HELLO".getBytes("UTF-8");
-         sendPacket = new DatagramPacket(inBuf, inBuf.length, IPaddress, portNumber);
+         sendPacket = new DatagramPacket(inBuf, inBuf.length, destIPaddress, destPortNumber);
          clientSocket.send(sendPacket);
+
+         //wait for response
+         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
+         clientSocket.receive(receivedPacket);
 
          //send END
          inBuf = "END".getBytes("UTF-8");
@@ -53,6 +62,13 @@ public class User {
          e.printStackTrace();
       }
       
+   }
+
+   private static void printSocketInfo(DatagramSocket socket) {
+      InetAddress serverIP = socket.getLocalAddress();
+      int portNum = socket.getLocalPort();
+
+      System.out.println("Socket created under: " + serverIP + " " + portNum);
    }
 
 }
