@@ -2,6 +2,11 @@
    Server handles the various concurrent connections initiated by any number of clients.
    It does this by creating a thread for each connection initiated. 
    The thread will handle all messages to be sent and received by the client.
+
+   TODO:
+   Make the server keep track of Clients
+   Implement message response
+   Remove the HELLO and END message testing
 */
 
 import java.util.*;
@@ -30,6 +35,7 @@ public class Server {
          byte[] inBuf = new byte[512];
          
          while (!(byteToString(inBuf).equals("END"))) {
+            //clear buffers after each packet
             inBuf = new byte[512];
             byte[] outBuf = new byte[512];
             //System.out.println("Looking for packets...");
@@ -41,13 +47,40 @@ public class Server {
             int receivedPort = receivedPacket.getPort();
             System.out.println("Packet received from: " + receivedAddress + ":" + receivedPort);
 
-            System.out.println(byteToString(inBuf));
+            String message = byteToString(inBuf);
+            String messageType = message.split(" ")[0];
+            System.out.println(message);
 
             //determine what to send them, for now it just returns what they send
             outBuf = inBuf;
-
             sendPacket = new DatagramPacket(outBuf, outBuf.length, receivedAddress, receivedPort);
             serverSocket.send(sendPacket);
+
+            //determine what to do based on sender's current state and message
+            switch (messageType) {
+               case "HELLO":
+                  //add user to memory
+                  //send CHALLENGE
+                  break;
+
+               case "RESPONSE":
+                  //determine if response is valid or not
+
+                     //send AUTH_SUCCESS
+
+                     //send AUTH_FAIL
+                  break;
+
+               case "CONNECT":
+                  //send CONNECTED and create TCP connection and thread
+                  break;
+            
+               default:
+                  System.out.println("Unknown or invalid protocol message type received from: " + receivedAddress + ":" + receivedPort);
+                  //TODO: print sender ID
+                  System.out.println("Sender ID: ");
+                  break;
+            }
          }
 
          serverSocket.close();
@@ -77,6 +110,5 @@ public class Server {
       System.out.println("New client connected from: " + clientIP);
       
    }
-
    
 }
