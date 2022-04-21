@@ -22,7 +22,7 @@ public class Server {
       //ID_keys keeps track of valid client IDs and their corresponding secret keys 
       Hashtable<Integer, Client> ID_keys = new Hashtable<>();
       //Keep track of all chat histories
-      Hashtable<Integer, ChatHistory> chatHistories = new Hashtable<>();
+      Hashtable<Integer, Session> chatHistories = new Hashtable<>();
 
       //get port number from command line arguments
       final int portNumber = 4445;

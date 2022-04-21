@@ -2,16 +2,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 /*
-   Chat History helps keep track of all the messages sent in a session and the clients that were involved.
+   Session helps keep track of a session, including the clients and the message history.
 */
 
-public class ChatHistory {
+public class Session {
    //keep track of the ids of all the participants
    private int[] chatters = new int[2];
    private int sessionID;
-   ArrayList<String> messages;
+   ArrayList<String> chatHistory;
 
-   public ChatHistory(int[] chatters, int sessionID) throws IllegalArgumentException{
+   public Session(int[] chatters, int sessionID) throws IllegalArgumentException{
       if (chatters.length != this.chatters.length) {
          throw new IllegalArgumentException(chatters.toString());
       }
@@ -27,8 +27,8 @@ public class ChatHistory {
       return Arrays.asList(this.chatters).containsAll(Arrays.asList(chatters));
    }
 
-   public ArrayList<String> getMessages() {
-      return messages;
+   public ArrayList<String> getHistory() {
+      return chatHistory;
    }
 
    public int getSessionID() {
@@ -36,6 +36,6 @@ public class ChatHistory {
    }
 
    public void addMessage(String newMessage) {
-      messages.add(newMessage);
+      chatHistory.add(newMessage);
    }
 }
