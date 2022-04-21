@@ -31,6 +31,11 @@ public class User {
 
       final int userID = Integer.parseInt(args[1]);
 
+      String message = "";
+      String rcvMessage = "";
+      String[] rcvTokens;
+      String rcvMessageType = "";
+
       try {
          InetAddress destIPaddress = InetAddress.getByName(args[0]);
          //create a new socket to send and receive data
@@ -38,41 +43,68 @@ public class User {
          printSocketInfo(clientSocket);
 
          //send HELLO
-         sendUDPPacket(inBuf, "HELLO", clientSocket, destIPaddress, 4445);
-
-         //wait for response
-         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
-         clientSocket.receive(receivedPacket);
-
-         System.out.println(byteToString(outBuf));
-
-         //send END
-         sendUDPPacket(inBuf, "END", clientSocket, destIPaddress, 4445);
-
-         //wait for response
-         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
-         clientSocket.receive(receivedPacket);
-
-         System.out.println(byteToString(outBuf));
+         message = "HELLO " + userID;
+         sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
 
          //wait for CHALLENGE(rand)
+         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
+         clientSocket.receive(receivedPacket);
+         rcvMessage = byteToString(outBuf);
+         rcvTokens = rcvMessage.split(" ");
+         rcvMessageType = rcvTokens[0];
+
+         System.out.println(rcvMessage);
+         if (!isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
+            System.exit(0);
+         }
+
+         //generate response using auth. for now it just returns the number it received
+         int rand = Integer.parseInt(rcvTokens[1]);
+         int response = rand;
 
          //respond with RESPONSE(Res)
+         message = "RESPONSE " + userID + " " + response;
+         sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
 
          //wait for AUTH message
+         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
+         clientSocket.receive(receivedPacket);
+         
+         rcvMessage = byteToString(outBuf);
+         rcvTokens = rcvMessage.split(" ");
+         rcvMessageType = rcvTokens[0];
+         int newPortNum = -1;
 
-            //AUTH_FAIL
+         System.out.println(message);
+         switch (rcvMessageType) {
+            case "AUTH_FAIL":
+               //commit die
+               System.exit(0);
+               break;
 
-            //AUTH_SUCCESS
+            case "AUTH_SUCCESS":
+               //generate CK-A key and decrypt
+               //parse port number and connect to TCP socket
+               newPortNum = Integer.parseInt(rcvTokens[2]);
+               //send CONNECTED datagram
+               break;
+         
+            default:
+               System.out.println("Unexpected token. Expected: AUTH_FAIL or AUTH_SUCCESS");
+               System.exit(1);
+               break;
+         }
 
          //establish TCP connection and send CONNECT
          System.out.println("Attempting TCP connection...");
+         Socket socket = new Socket(destIPaddress, newPortNum);
+         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+         BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
          //wait for CONNECTED signal
-
          System.out.println("TCP connection successful.");
 
-         //Chat session
+         //CHAT SESSION SECTION
          Scanner scanner = new Scanner(System.in);
          String userInput = "";
          String[] userTokens;
@@ -86,15 +118,23 @@ public class User {
             userInput = scanner.nextLine();
             userTokens = userInput.split(" ");
             if (userTokens[0] == "Chat") {
+               if (currentlyChatting) {
+                  System.out.println("You're already chatting with someone!");
+                  break;
+               }
                int destID = Integer.parseInt(userTokens[1]);
                //send request to server
+               outStream.println("CHAT_REQUEST " + destID);
                
                //wait for server response
-               if (currentlyChatting) {
+               message = inStream.readLine();
+               String messageType = message.split(" ")[0];
+               if (messageType.equals("CHAT_STARTED")) {
                   //chat started
                   System.out.println("Chat started");
+                  currentlyChatting = true;
                }
-               else if (!currentlyChatting) {
+               else if (messageType.equals("UNREACHABLE")) {
                   System.out.println("Sorry, user " + destID + " was not available.");
                }
                else {
@@ -105,9 +145,16 @@ public class User {
                break;
             }
             else if (userInput == "End chat"){
+               //end connection with user B
+               
+            }
+            else {
                //normal chat
+               outStream.println(userInput);
             }
          }
+
+         socket.close();
 
       } catch (SocketException e) {
          // TODO Auto-generated catch block
@@ -120,6 +167,22 @@ public class User {
          e.printStackTrace();
       }
       
+   }
+
+   //TODO: finish this and generalize 
+   private static boolean isExpectedMessage(String expectedToken, int expectedLength, String message) {
+      String[] tokens = message.split(" ");
+      if (tokens[0] != "CHALLENGE") {
+         System.out.println("Unexpected token. Expected: " + expectedToken);
+         return false;
+      }
+      else if (tokens.length != expectedLength) {
+         System.out.println("Too many arguments in " + expectedToken + " datagram. Found: " + tokens.length + " Expected: " + expectedLength);
+         return false;
+      }
+      else {
+         return true;
+      }
    }
 
    private static void printSocketInfo(DatagramSocket socket) {

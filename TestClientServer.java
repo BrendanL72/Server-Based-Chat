@@ -2,7 +2,7 @@
    TestClientServer includes various scripts to test if the clinet and server are functioning properly
    IDEA:
    Maybe make it able to read txt files that have the scripting in them instead of functions
-
+   Although it could cause timing issues
 */
 
 public class TestClientServer {

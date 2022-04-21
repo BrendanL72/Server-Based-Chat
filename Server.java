@@ -6,7 +6,7 @@
    TODO:
    Make the server keep track of Clients
    Implement message response
-   Remove the HELLO and END message testing
+   Create TCP connection for each succesfully connected User
 */
 
 import java.util.*;
@@ -20,10 +20,13 @@ public class Server {
       final int MAX_SECRET_KEY = 1000000;
 
       //ID_keys keeps track of valid client IDs and their corresponding secret keys 
-      Hashtable<Integer, Integer> ID_keys = new Hashtable<>();
+      Hashtable<Integer, Client> ID_keys = new Hashtable<>();
+      //Keep track of all chat histories
+      Hashtable<Integer, ChatHistory> chatHistories = new Hashtable<>();
 
       //get port number from command line arguments
       final int portNumber = 4445;
+
       //set up server
       try {
          DatagramSocket serverSocket = new DatagramSocket(portNumber);
@@ -34,6 +37,7 @@ public class Server {
 
          byte[] inBuf = new byte[512];
          
+         //read datagrams 
          while (!(byteToString(inBuf).equals("END"))) {
             //clear buffers after each packet
             inBuf = new byte[512];
@@ -61,6 +65,8 @@ public class Server {
                case "HELLO":
                   //add user to memory
                   //send CHALLENGE
+
+                  //set user to wait_auth
                   break;
 
                case "RESPONSE":
@@ -68,11 +74,18 @@ public class Server {
 
                      //send AUTH_SUCCESS
 
+                        //set user to connecting 
+
                      //send AUTH_FAIL
+
+                        //set user to offline 
                   break;
 
                case "CONNECT":
                   //send CONNECTED and create TCP connection and thread
+
+                  //set user to connected
+
                   break;
             
                default:

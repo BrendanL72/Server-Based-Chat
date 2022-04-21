@@ -4,7 +4,7 @@
 */
 
 enum State {
-   offline, wait_challenge, wait_auth, connecting, connected
+   offline, wait_challenge, wait_auth, connecting, connected, wait_chat, chatting
 }
 
 public class Client {

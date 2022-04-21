@@ -1,10 +1,9 @@
 /*
    Connection represents the server-side handling of a client's chat phase.
-   It is created by the server when a new client successfully connects to the server.
+   It is created by the server when a new client successfully connects to the server and the server creates a TCP sockett to communicate with them
 
 */
 
-import java.util.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -40,41 +39,67 @@ public class Connection extends Thread{
          System.out.println("New TCP connection created.");
          String message = "";
          String messageType = "";
+         String[] tokens;
          while (!messageType.equals("END_REQUEST")) {
             message = rcvClient.readLine();
-            messageType = message.split(" ")[0];
+            tokens = message.split(" ");
+            messageType = tokens[0];
             switch (messageType) {
-               case "CHAT REQUEST":
-                  //determine if requested user is available
+               case "CHAT":
+                  //format CHAT <session ID> <chat message>
+                  
+                  //add message to chat history
 
-                     //available
+                  break;
+               case "CHAT_REQUEST":
+                  if (state != State.connected) {
+                     System.out.println("Invalid request from " + clientID +  " due to state.");
+                  }
+                  else {
+                     //determine if requested user is available
+                     
+                        //available
+                        
+                           //add new session
 
-                     //not available
+                           //change state to chatting 
+
+                        //not available
+                  }
                   break;
 
                case "HISTORY_REQ":
-                  //send history response
+                  //determine target id
+
+                  //send history responses, one packet per line
+
+                  
                   break;
 
                case "END_REQUEST":
-                  //exit loop
-                  break;
-            
+                  if (state != State.chatting) {
+                     System.out.println("Invalid request, not currently chatting with anyone");
+                  }
+                  else {
+                     //exit loop
+                     break;
+                  }
+                  
                default:
                   System.out.println("ERROR: Invalid or unrecognized message type: " + messageType);
                   System.out.println("Message: " + message);
                   break;
             }
+
+            //end connection with client
+            socket.close();
+            System.out.println("TCP connection with " + clientID + " closed");
       }
       } catch (IOException e) {
          // TODO Auto-generated catch block
          System.out.println("ERROR: Client " + clientID +  " input or output not found.");
          e.printStackTrace();
       }
-      
-      
-
-      System.out.println("TCP connection with " + clientID + " closed");
       
    }
 
