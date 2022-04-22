@@ -1,30 +1,39 @@
 /*
-   Server handles the various concurrent connections initiated by any number of clients.
-   It does this by creating a thread for each connection initiated. 
+   Server handles the prospective connectors via UDP and the various concurrent connections initiated by any number of clients.
+   It does this by creating a thread for each TCP connection initiated. 
    The thread will handle all messages to be sent and received by the client.
 
    TODO:
    Make the server keep track of Clients
+   Create a file that keeps track of subs' secret keys using client IDs and then have Server read it in 
    Implement message response
    Create TCP connection for each succesfully connected User
 */
 
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.net.*;
-import java.nio.charset.Charset;
 
 public class Server {
+
+   enum State {
+      offline, wait_challenge, wait_auth, connecting, connected, wait_chat, chatting
+   }
 
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
       final int MAX_SECRET_KEY = 1000000;
 
-      //ID_keys keeps track of valid client IDs and their corresponding secret keys 
-      Hashtable<Integer, Client> ID_keys = new Hashtable<>();
-      //Keep track of all chat histories
-      Hashtable<Integer, Session> chatHistories = new Hashtable<>();
+      //keep track of each potential client's connection state. (Client ID, Current State of client)
+      Hashtable <Integer, State> clientStates = new Hashtable<>(); 
+      //subscirbers keeps track of valid client IDs and their corresponding secret keys. (Client ID, Secret Key)
+      Hashtable<Integer, Integer> subscribers = new Hashtable<>();
 
-      //get port number from command line arguments
+      //Keep track of all chat histories (Session ID, Session)
+      Hashtable<Integer, Session> sessions = new Hashtable<>();
+      //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
+      Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
+
       final int portNumber = 4445;
 
       //set up server
@@ -38,11 +47,11 @@ public class Server {
          byte[] inBuf = new byte[512];
          
          //read datagrams 
-         while (!(byteToString(inBuf).equals("END"))) {
+         while (!(UDPMethods.byteToString(inBuf).equals("END"))) {
             //clear buffers after each packet
             inBuf = new byte[512];
             byte[] outBuf = new byte[512];
-            //System.out.println("Looking for packets...");
+            System.out.println("Looking for packets...");
             receivedPacket = new DatagramPacket(inBuf, inBuf.length);
             serverSocket.receive(receivedPacket);
 
@@ -51,27 +60,58 @@ public class Server {
             int receivedPort = receivedPacket.getPort();
             System.out.println("Packet received from: " + receivedAddress + ":" + receivedPort);
 
-            String message = byteToString(inBuf);
-            String messageType = message.split(" ")[0];
+            String message = UDPMethods.byteToString(inBuf);
+            String[] tokens = message.split(" ");
+            String messageType = tokens[0];
             System.out.println(message);
-
+            
             //determine what to send them, for now it just returns what they send
-            outBuf = inBuf;
-            sendPacket = new DatagramPacket(outBuf, outBuf.length, receivedAddress, receivedPort);
-            serverSocket.send(sendPacket);
+            //outBuf = inBuf;
+            //sendPacket = new DatagramPacket(outBuf, outBuf.length, receivedAddress, receivedPort);
+            //serverSocket.send(sendPacket);
 
             //determine what to do based on sender's current state and message
             switch (messageType) {
                case "HELLO":
-                  //add user to memory
-                  //send CHALLENGE
+                  //parse message
+                  try {
+                     if (tokens.length != 2) {
+                        throw new Exception(message + " has insufficient tokens");
+                     }
+                     int clientID = Integer.parseInt(tokens[1]);
 
-                  //set user to wait_auth
+                     //If sender is not a sub, don't do anything
+                     if (!subscribers.containsKey(clientID)) {
+                        throw new Exception("Client " + clientID + "not found.");
+                     }
+
+                     //determine if client isn't already trying to connect
+                     if (clientStates.containsKey(clientID)) {
+                        throw new Exception("Client " + clientID + " has already tried to connect.");
+                     }
+                     
+                     //grab subscriber's secret key
+                     int secretKey = subscribers.get(clientID);
+
+                     //add user to memory
+                     subscribers.put(clientID, secretKey);
+                     //send CHALLENGE <rand>
+                     //TODO: implement rand properly idk
+                     int rand = secretKey;
+                     UDPMethods.sendUDPPacket(outBuf, "CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
+
+                     //set user to waiting for authentification
+                     clientStates.put(clientID, State.wait_auth);
+   
+                  } catch (Exception e) {
+                     //TODO: handle exception
+                     System.out.println(e);
+                  }
                   break;
 
                case "RESPONSE":
                   //determine if response is valid or not
-
+                  
                      //send AUTH_SUCCESS
 
                         //set user to connecting 
@@ -103,22 +143,16 @@ public class Server {
       }
    }
 
-   //simple byte array to string conversion under UTF-8 format
-   private static String byteToString(byte[] buf) {
-      String convert = new String(buf, Charset.forName("UTF-8"));
-      return convert.trim();
-   }
-
    //simple debugging method that prints the server info
-   private static void printServerInfo(DatagramSocket serverSocket) {
+   public static void printServerInfo(DatagramSocket serverSocket) {
       InetAddress serverIP = serverSocket.getLocalAddress();
       int portNum = serverSocket.getLocalPort();
-
+   
       System.out.println("Server created under: " + serverIP + ":" + portNum);
    }
 
    //simple debugging method that prints any client that connects to the socket unoffically
-   private static void printClientInfo(Socket client) {
+   public static void printClientInfo(Socket client) {
       InetAddress clientIP = client.getInetAddress();
       System.out.println("New client connected from: " + clientIP);
       

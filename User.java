@@ -11,7 +11,6 @@
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.Charset;
 import java.util.Scanner;
 
 public class User {
@@ -40,21 +39,21 @@ public class User {
          InetAddress destIPaddress = InetAddress.getByName(args[0]);
          //create a new socket to send and receive data
          DatagramSocket clientSocket = new DatagramSocket();
-         printSocketInfo(clientSocket);
+         UDPMethods.printSocketInfo(clientSocket);
 
          //send HELLO
          message = "HELLO " + userID;
-         sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
+         UDPMethods.sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
 
          //wait for CHALLENGE(rand)
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
          clientSocket.receive(receivedPacket);
-         rcvMessage = byteToString(outBuf);
+         rcvMessage = UDPMethods.byteToString(outBuf);
          rcvTokens = rcvMessage.split(" ");
          rcvMessageType = rcvTokens[0];
 
          System.out.println(rcvMessage);
-         if (!isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
+         if (!UDPMethods.isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
             System.exit(0);
          }
 
@@ -64,13 +63,13 @@ public class User {
 
          //respond with RESPONSE(Res)
          message = "RESPONSE " + userID + " " + response;
-         sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
+         UDPMethods.sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
 
          //wait for AUTH message
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
          clientSocket.receive(receivedPacket);
          
-         rcvMessage = byteToString(outBuf);
+         rcvMessage = UDPMethods.byteToString(outBuf);
          rcvTokens = rcvMessage.split(" ");
          rcvMessageType = rcvTokens[0];
          int newPortNum = -1;
@@ -167,48 +166,6 @@ public class User {
          e.printStackTrace();
       }
       
-   }
-
-   //TODO: finish this and generalize 
-   private static boolean isExpectedMessage(String expectedToken, int expectedLength, String message) {
-      String[] tokens = message.split(" ");
-      if (tokens[0] != "CHALLENGE") {
-         System.out.println("Unexpected token. Expected: " + expectedToken);
-         return false;
-      }
-      else if (tokens.length != expectedLength) {
-         System.out.println("Too many arguments in " + expectedToken + " datagram. Found: " + tokens.length + " Expected: " + expectedLength);
-         return false;
-      }
-      else {
-         return true;
-      }
-   }
-
-   private static void printSocketInfo(DatagramSocket socket) {
-      InetAddress serverIP = socket.getLocalAddress();
-      int portNum = socket.getLocalPort();
-
-      System.out.println("Socket created under: " + serverIP + ":" + portNum);
-   }
-
-   private static String byteToString(byte[] buf) {
-      String convert = new String(buf, Charset.forName("UTF-8"));
-      return convert.trim();
-   }
-
-   private static void sendUDPPacket(byte[] buf, String message, DatagramSocket clientSocket, InetAddress destIP, int destPort) {
-      try {
-         buf = message.getBytes("UTF-8");
-         DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, destIP, destPort);
-         clientSocket.send(sendPacket);
-      } catch (UnsupportedEncodingException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (IOException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
    }
 
 }

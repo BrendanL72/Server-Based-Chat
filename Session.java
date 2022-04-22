@@ -35,7 +35,7 @@ public class Session {
       return sessionID;
    }
 
-   public void addMessage(String newMessage) {
+   public void recordMessage(String newMessage) {
       chatHistory.add(newMessage);
    }
 }

@@ -1,5 +1,7 @@
 /*
-   TestClientServer includes various scripts to test if the clinet and server are functioning properly
+   TestClientServer includes various scripts to test if the client and server are functioning properly
+   Section 10: Validation Scenarios
+
    IDEA:
    Maybe make it able to read txt files that have the scripting in them instead of functions
    Although it could cause timing issues
@@ -10,7 +12,9 @@ public class TestClientServer {
       //ask user for which test they wish to run
    }
 
-   //test methods go here
+   /*
+      test methods go below
+   */
 
    //Basic chat initiated and closed by A
    private static void basicChatTest1() {
@@ -34,7 +38,12 @@ public class TestClientServer {
 
    //History recall
    private static void historyTest() {
-      
+      //when did the Napoleonic Wars end?
+   }
+
+   //test many chats running at the same time
+   private static void manyChats() {
+
    }
 
 }

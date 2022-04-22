@@ -1,6 +1,9 @@
 
 /*
    Client represents any User that wishes to properly connect to the server
+   
+   UPDATE:
+   I've decided against using this as secret keys and client state are not related
 */
 
 enum State {

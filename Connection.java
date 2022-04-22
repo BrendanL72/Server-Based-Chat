@@ -40,13 +40,20 @@ public class Connection extends Thread{
          String message = "";
          String messageType = "";
          String[] tokens;
+
+         //service any messages sent by the user
          while (!messageType.equals("END_REQUEST")) {
+            //read message and split into tokens
             message = rcvClient.readLine();
             tokens = message.split(" ");
             messageType = tokens[0];
+
+            //determine behavior based on message header
             switch (messageType) {
                case "CHAT":
                   //format CHAT <session ID> <chat message>
+
+                  //send message to session/other user 
                   
                   //add message to chat history
 
@@ -62,15 +69,18 @@ public class Connection extends Thread{
                         
                            //add new session
 
-                           //change state to chatting 
+                           //change state to chatting
 
                         //not available
+
+                           //do nothing?
                   }
                   break;
 
                case "HISTORY_REQ":
                   //determine target id
 
+                  //get access 
                   //send history responses, one packet per line
 
                   
@@ -81,9 +91,10 @@ public class Connection extends Thread{
                      System.out.println("Invalid request, not currently chatting with anyone");
                   }
                   else {
-                     //exit loop
-                     break;
+                     //skip to end of while loop to exit loop
+                     continue;
                   }
+                  break;
                   
                default:
                   System.out.println("ERROR: Invalid or unrecognized message type: " + messageType);
