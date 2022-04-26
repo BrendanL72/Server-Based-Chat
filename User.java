@@ -25,7 +25,6 @@ public class User {
       DatagramPacket sendPacket;
       DatagramPacket receivedPacket;
 
-      byte[] inBuf = new byte[512];
       byte[] outBuf = new byte[512];
 
       final int userID = Integer.parseInt(args[1]);
@@ -44,7 +43,7 @@ public class User {
 
          //send HELLO
          message = "HELLO " + userID;
-         UDPMethods.sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
+         UDPMethods.sendUDPPacket(message, clientSocket, destIPaddress, 4445);
 
          //wait for CHALLENGE(rand)
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
@@ -64,7 +63,7 @@ public class User {
 
          //respond with RESPONSE(Res)
          message = "RESPONSE " + userID + " " + response;
-         UDPMethods.sendUDPPacket(inBuf, message, clientSocket, destIPaddress, 4445);
+         UDPMethods.sendUDPPacket(message, clientSocket, destIPaddress, 4445);
 
          //wait for AUTH message
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);

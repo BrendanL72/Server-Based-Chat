@@ -52,10 +52,12 @@ public class Connection extends Thread{
             switch (messageType) {
                case "CHAT":
                   //format CHAT <session ID> <chat message>
-
-                  //send message to session/other user 
+                  int sessionID = Integer.parseInt(tokens[1]);
+                  String chatMessage = tokens[2];
+                  //send message to session/other user
                   
                   //add message to chat history
+                  
 
                   break;
                case "CHAT_REQUEST":

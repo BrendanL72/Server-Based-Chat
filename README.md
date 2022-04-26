@@ -12,13 +12,13 @@ Creating a datagram client and server
 https://docs.oracle.com/javase/tutorial/networking/datagrams/clientServer.html
 
 # TO DO
-Finish Server Connection Phase
+Finish Server Connection Phase - Brendan
 
-Finish User Connection + Chat Phase
+Finish User Connection + Chat Phase - Kiara
 
-Implement Connection.java's message handling (multithreading)
+Implement Connection.java's message handling (multithreading) - Cloyd + Thomas
 
-Get it to work
+Get it to work - all
 
 -----
 

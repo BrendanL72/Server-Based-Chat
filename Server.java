@@ -34,6 +34,9 @@ public class Server {
       //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
       Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
 
+      //keeps track of all cookies that have been sent out and 
+      Hashtable<Integer, Integer> cookies = new Hashtable<>();
+
       final int portNumber = 4445;
 
       //set up server
@@ -42,7 +45,6 @@ public class Server {
          printServerInfo(serverSocket);
 
          DatagramPacket receivedPacket;
-         DatagramPacket sendPacket;
 
          byte[] inBuf = new byte[512];
          
@@ -50,7 +52,6 @@ public class Server {
          while (!(UDPMethods.byteToString(inBuf).equals("END"))) {
             //clear buffers after each packet
             inBuf = new byte[512];
-            byte[] outBuf = new byte[512];
             System.out.println("Looking for packets...");
             receivedPacket = new DatagramPacket(inBuf, inBuf.length);
             serverSocket.receive(receivedPacket);
@@ -98,7 +99,7 @@ public class Server {
                      //send CHALLENGE <rand>
                      //TODO: implement rand properly idk
                      int rand = secretKey;
-                     UDPMethods.sendUDPPacket(outBuf, "CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
+                     UDPMethods.sendUDPPacket("CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
                      clientStates.put(clientID, State.wait_auth);
@@ -110,22 +111,37 @@ public class Server {
                   break;
 
                case "RESPONSE":
-                  //determine if response is valid or not
-                  
+                  //format: RESPONSE <client ID> <resp>
+                  if (tokens.length != 2) {
+                     throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
+                  }
+                  int clientID = Integer.parseInt(tokens[1]);
+                  int resp = Integer.parseInt(tokens[2]);
+                  //determine if response is valid or not. For now it's gonna be if the secret key matches
+                  if (sessions.get(key)) {
+                     //generate random cookie
+                     int rand = (int) (Math.random() * 1000);
+                     cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
-
-                        //set user to connecting 
-
+                     portNumber += 1;
+                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
+                     //set user to connecting 
+                     clientStates.put(clientID, State.connecting);
+                  }
+                  else {
                      //send AUTH_FAIL
 
-                        //set user to offline 
+                     //set user to offline 
+                  }
                   break;
 
                case "CONNECT":
+                  //format: CONNECT <rand cookie>
                   //send CONNECTED and create TCP connection and thread
+                  UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
 
                   //set user to connected
-
+                  clientStates.put(clientID, State.connected);
                   break;
             
                default:

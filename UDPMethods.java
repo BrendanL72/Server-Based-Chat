@@ -35,8 +35,9 @@ public class UDPMethods {
       System.out.println("Socket created under: " + serverIP + ":" + portNum);
    }
 
-   static void sendUDPPacket(byte[] buf, String message, DatagramSocket socket, InetAddress destIP, int destPort) {
+   static void sendUDPPacket(String message, DatagramSocket socket, InetAddress destIP, int destPort) {
       try {
+         byte[] buf = new byte[512];
          buf = message.getBytes("UTF-8");
          DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, destIP, destPort);
          socket.send(sendPacket);
