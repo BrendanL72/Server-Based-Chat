@@ -36,6 +36,7 @@ public class User {
       String rcvMessageType = "";
 
       try {
+         //CONNECTION PHASE
          InetAddress destIPaddress = InetAddress.getByName(args[0]);
          //create a new socket to send and receive data
          DatagramSocket clientSocket = new DatagramSocket();
@@ -148,7 +149,7 @@ public class User {
                
             }
             else {
-               //normal chat
+               //normal chat (change this)
                outStream.println(userInput);
             }
          }

@@ -9,6 +9,7 @@ public class Session {
    //keep track of the ids of all the participants
    private int[] chatters = new int[2];
    private int sessionID;
+   //change to keep track of who sent what
    ArrayList<String> chatHistory;
 
    public Session(int[] chatters, int sessionID) throws IllegalArgumentException{
