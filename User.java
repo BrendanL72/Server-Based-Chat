@@ -75,10 +75,16 @@ public class User {
 
          //generate response using auth. for now it just returns the number it received
          int rand = Integer.parseInt(rcvTokens[1]);
-         int response = rand;
+         //int response = rand;
+         String response = "";
+
+         A3 hasher = new A3();
+         response = hasher.hash(secretKey, rand);
+
+         System.out.println("USER RAND: " + rand);
 
          //respond with RESPONSE(Res)
-         message = "RESPONSE " + userID + " " + response;
+         message = "RESPONSE " + userID + " " + response + " " + rand;
          UDPMethods.sendUDPPacket(message, clientSocket, destIPaddress, 4445);
 
          //wait for AUTH message

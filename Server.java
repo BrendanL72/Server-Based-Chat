@@ -8,6 +8,7 @@
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.util.Random;
 
 import javax.sound.midi.SysexMessage;
 
@@ -25,6 +26,8 @@ public class Server {
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
       final int MAX_SECRET_KEY = 1000000;
+
+      Random r = new Random();
 
       //keep track of each potential client's connection state. (Client ID, Current State of client)
       Hashtable <Integer, State> clientStates = new Hashtable<>(); 
@@ -92,11 +95,14 @@ public class Server {
             String[] tokens = message.split(" ");
             String messageType = tokens[0];
             System.out.println(message);
+            //System.out.println("messageType:" + messageType);
             
             //determine what to send them, for now it just returns what they send
             //outBuf = inBuf;
             //sendPacket = new DatagramPacket(outBuf, outBuf.length, receivedAddress, receivedPort);
             //serverSocket.send(sendPacket);
+
+
 
             //determine what to do based on sender's current state and message
             switch (messageType) {
@@ -124,8 +130,8 @@ public class Server {
                      //add user to memory
                      subscribers.put(clientID, secretKey);
                      //send CHALLENGE <rand>
+                     int rand = r.nextInt(1000);
                      //TODO: implement rand properly idk
-                     int rand = secretKey;
                      UDPMethods.sendUDPPacket("CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
@@ -139,15 +145,31 @@ public class Server {
 
                case "RESPONSE":
                   //format: RESPONSE <client ID> <resp>
-                  if (tokens.length != 3) {
+                  if (tokens.length != 4) {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
+                  
+                  //System.out.println("1: " + tokens[1] + "/ 2: " + tokens[2]);
+
                   int clientID = Integer.parseInt(tokens[1]);
-                  int resp = Integer.parseInt(tokens[2]);
+                  String userHashedResponse = "" + tokens[2];
+                  int rand = Integer.parseInt(tokens[3]);
+                  int secretKey = subscribers.get(clientID);
+                  
+                  System.out.println("SERVER RAND: " + rand);
+
+                  String hashedValue = "";
+                  A3 hasher = new A3();
+                  hashedValue = hasher.hash(secretKey, rand);
+
+
+                  //System.out.println("Hashed from server: " + hashedValue);
+                  //System.out.println("Hashed form User: " + tokens[2]);
+
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
-                  if (resp == subscribers.get(clientID)) {
+                  if (hashedValue.equals(tokens[2])) {
                      //generate random cookie
-                     int rand = (int) (Math.random() * 1000);
+                     rand = (int) (Math.random() * 1000);
                      cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
                      UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
@@ -168,12 +190,12 @@ public class Server {
                   //format: CONNECT <rand cookie>
                   //TODO: change connectedClientID to get the 
                   TCPportnum += 1;
-                  System.out.println("hello");
+
                   InetSocketAddress thingy = new InetSocketAddress(receivedAddress, receivedPort);
                   int connectedClientID = connectingClients.get(thingy);
-                  System.out.println("hello");
+
                   Socket clientSocket = new Socket(receivedAddress, receivedPort);
-                  int secretKey = subscribers.get(connectedClientID);
+                  secretKey = subscribers.get(connectedClientID);
                   Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
                   newTCPConnection.start();
                   //send CONNECTED and create TCP connection and thread
@@ -196,7 +218,7 @@ public class Server {
 
       } catch (Exception e) {
          //TODO: handle exception
-         System.out.println("Problem?");
+         System.out.println(e);
       }
    }
 

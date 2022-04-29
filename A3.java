@@ -11,7 +11,7 @@ public class A3 {
             String s = "" + secretKey + rand;
 
             String hashed = toHexString(getSHA(s));
-
+            
             return hashed;
 
         }
