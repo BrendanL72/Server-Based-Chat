@@ -34,6 +34,7 @@ public class Connection extends Thread{
 
    public void run() {
       try {
+         System.out.println("Running new TCP connection for" +  clientID + " at " + socket);
          PrintWriter sendClient = new PrintWriter(socket.getOutputStream(), true);
          BufferedReader rcvClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
          System.out.println("New TCP connection created.");
