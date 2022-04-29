@@ -11,11 +11,12 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
 
+
 public class UDPMethods {
    //determines if the message has the expected number of tokens and the correct header/type
    static boolean isExpectedMessage(String expectedToken, int expectedLength, String message) {
       String[] tokens = message.split(" ");
-      if (tokens[0] != expectedToken) {
+      if (!tokens[0].equals(expectedToken)) {
          System.out.println("Unexpected token. Expected: " + expectedToken);
          return false;
       }
@@ -41,6 +42,7 @@ public class UDPMethods {
          buf = message.getBytes("UTF-8");
          DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, destIP, destPort);
          socket.send(sendPacket);
+         System.out.println("Sent: " + message);
       } catch (UnsupportedEncodingException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();

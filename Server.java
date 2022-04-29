@@ -3,15 +3,17 @@
    It does this by creating a thread for each TCP connection initiated. 
    The thread will handle all messages to be sent and received by the client.
 
-   TODO:
-   Make the server keep track of Clients
-   Create a file that keeps track of subs' secret keys using client IDs and then have Server read it in 
-   Implement message response
-   Create TCP connection for each succesfully connected User
+   Note: running java Server.java will cause an IllegalAccessError
 */
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
+
+import javax.sound.midi.SysexMessage;
+
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.File;
 import java.net.*;
 
 public class Server {
@@ -34,10 +36,35 @@ public class Server {
       //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
       Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
 
+      //Keep track of all authenticated connecting clients
+      Hashtable<InetSocketAddress, Integer> connectingClients = new Hashtable<>();
+
       //keeps track of all cookies that have been sent out and 
       Hashtable<Integer, Integer> cookies = new Hashtable<>();
 
       final int portNumber = 4445;
+      int TCPportnum = portNumber;
+
+      //read in the list of valid subscribers to the server
+      try {
+         String absolutePath = new File(".").getAbsolutePath();
+         absolutePath = absolutePath.substring(0, absolutePath.length()-1);
+         FileReader inFile = new FileReader("subscribers.txt");
+         Scanner input = new Scanner(inFile);
+         String line;
+         String[] tokens;
+         while (input.hasNextLine()) {
+            line = input.nextLine();
+            tokens = line.split(" ");
+            int clientID = Integer.parseInt(tokens[0]);
+            int secretKey = Integer.parseInt(tokens[1]);
+            subscribers.put(clientID, secretKey);
+         }
+      } catch (FileNotFoundException e1) {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }
+      
 
       //set up server
       try {
@@ -83,7 +110,7 @@ public class Server {
 
                      //If sender is not a sub, don't do anything
                      if (!subscribers.containsKey(clientID)) {
-                        throw new Exception("Client " + clientID + "not found.");
+                        throw new Exception("Client " + clientID + " not found.");
                      }
 
                      //determine if client isn't already trying to connect
@@ -112,36 +139,49 @@ public class Server {
 
                case "RESPONSE":
                   //format: RESPONSE <client ID> <resp>
-                  if (tokens.length != 2) {
+                  if (tokens.length != 3) {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
                   int clientID = Integer.parseInt(tokens[1]);
                   int resp = Integer.parseInt(tokens[2]);
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
-                  if (sessions.get(key)) {
+                  if (resp == subscribers.get(clientID)) {
                      //generate random cookie
                      int rand = (int) (Math.random() * 1000);
                      cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
-                     portNumber += 1;
                      UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
                      //set user to connecting 
                      clientStates.put(clientID, State.connecting);
+                     connectingClients.put(new InetSocketAddress(receivedAddress, receivedPort), clientID);
                   }
                   else {
                      //send AUTH_FAIL
+                     UDPMethods.sendUDPPacket("AUTH_FAIL", serverSocket, receivedAddress, receivedPort);
 
                      //set user to offline 
+                     clientStates.put(clientID, State.offline);
                   }
                   break;
 
                case "CONNECT":
                   //format: CONNECT <rand cookie>
+                  //TODO: change connectedClientID to get the 
+                  TCPportnum += 1;
+                  System.out.println("hello");
+                  InetSocketAddress thingy = new InetSocketAddress(receivedAddress, receivedPort);
+                  int connectedClientID = connectingClients.get(thingy);
+                  System.out.println("hello");
+                  Socket clientSocket = new Socket(receivedAddress, receivedPort);
+                  int secretKey = subscribers.get(connectedClientID);
+                  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  newTCPConnection.start();
                   //send CONNECTED and create TCP connection and thread
                   UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
-
+                  
                   //set user to connected
-                  clientStates.put(clientID, State.connected);
+                  clientStates.put(connectedClientID, State.connected);
+                  connectingClients.remove(new InetSocketAddress(receivedAddress, receivedPort));
                   break;
             
                default:
@@ -151,11 +191,12 @@ public class Server {
                   break;
             }
          }
-
+         System.out.println("Closing server socket...");
          serverSocket.close();
 
       } catch (Exception e) {
          //TODO: handle exception
+         System.out.println("Problem?");
       }
    }
 
