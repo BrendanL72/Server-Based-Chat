@@ -8,6 +8,9 @@
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
+
+import javax.sound.midi.SysexMessage;
+
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.File;
@@ -147,7 +150,6 @@ public class Server {
                      int rand = (int) (Math.random() * 1000);
                      cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
-                     System.out.println("hello");
                      UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
                      //set user to connecting 
                      clientStates.put(clientID, State.connecting);
@@ -164,15 +166,19 @@ public class Server {
 
                case "CONNECT":
                   //format: CONNECT <rand cookie>
-                  //send CONNECTED and create TCP connection and thread
-                  UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
+                  //TODO: change connectedClientID to get the 
                   TCPportnum += 1;
-                  int connectedClientID = connectingClients.get(new InetSocketAddress(receivedAddress, TCPportnum));
+                  System.out.println("hello");
+                  InetSocketAddress thingy = new InetSocketAddress(receivedAddress, receivedPort);
+                  int connectedClientID = connectingClients.get(thingy);
+                  System.out.println("hello");
                   Socket clientSocket = new Socket(receivedAddress, receivedPort);
                   int secretKey = subscribers.get(connectedClientID);
                   Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
                   newTCPConnection.start();
-
+                  //send CONNECTED and create TCP connection and thread
+                  UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
+                  
                   //set user to connected
                   clientStates.put(connectedClientID, State.connected);
                   connectingClients.remove(new InetSocketAddress(receivedAddress, receivedPort));

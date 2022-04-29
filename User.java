@@ -19,7 +19,7 @@ public class User {
    public static void main(String[] args) {
       //format: java User <ip> <user id>
       if (args.length != 2) { 
-         System.out.println("try java User <dest ip> <user id>");
+         System.out.println("try java User <dest ip> <user file>");
          System.exit(1);
       }
 
@@ -27,8 +27,23 @@ public class User {
       DatagramPacket receivedPacket;
 
       byte[] outBuf = new byte[512];
+      int userID = 0;
+      int secretKey = 0;
 
-      final int userID = Integer.parseInt(args[1]);
+      //read in userID and secretkey from the text file
+      try {
+         FileReader userFile = new FileReader(args[1]);
+         Scanner userFileInput = new Scanner(userFile);
+         String userInfo = userFileInput.nextLine();
+         String tokens[] = userInfo.split(" ");
+         userID = Integer.parseInt(tokens[0]);
+         secretKey = Integer.parseInt(tokens[1]);
+      } catch (FileNotFoundException e1) {
+         // TODO Auto-generated catch block
+         e1.printStackTrace();
+      }
+      System.out.println("User ID: " + userID);
+      System.out.println("Secret Key: " + secretKey);
 
       String message = "";
       String rcvMessage = "";
@@ -89,7 +104,7 @@ public class User {
                //parse port number and connect to TCP socket
                newPortNum = Integer.parseInt(rcvTokens[2]);
                //send CONNECTED datagram
-               UDPMethods.sendUDPPacket("CONNECTED", clientSocket, destIPaddress, 4445);
+               UDPMethods.sendUDPPacket("CONNECT", clientSocket, destIPaddress, 4445);
                break;
          
             default:
@@ -97,6 +112,12 @@ public class User {
                System.exit(1);
                break;
          }
+
+         //wait for connected response message
+         receivedPacket = new DatagramPacket(outBuf, outBuf.length);
+         clientSocket.receive(receivedPacket);
+         rcvMessage = UDPMethods.byteToString(outBuf);
+         System.out.println(rcvMessage);
 
          //establish TCP connection and send CONNECT
          System.out.println("Attempting TCP connection...");
@@ -156,7 +177,7 @@ public class User {
                outStream.println(userInput);
             }
          }
-
+         scanner.close();
          socket.close();
 
       } catch (SocketException e) {
