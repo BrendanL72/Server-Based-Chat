@@ -127,7 +127,8 @@ public class Server {
                      subscribers.put(clientID, secretKey);
                      //send CHALLENGE <rand>
                      //TODO: implement rand properly idk
-                     int rand = secretKey;
+                     int rand = (int) (Math.random() * 1000);
+                     cookies.put(clientID, rand);
                      UDPMethods.sendUDPPacket("CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
@@ -145,15 +146,22 @@ public class Server {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
                   int clientID = Integer.parseInt(tokens[1]);
-                  int resp = Integer.parseInt(tokens[2]);
+                  String resp = tokens[2];
+
+                  //get hashedKey to compare to response
+                  int secretKey = subscribers.get(clientID);
+                  A3 hasher = new A3();
+                  System.out.println("cookies int: " + cookies.get(clientID));
+                  String hashedKey = hasher.hash(secretKey, cookies.get(clientID));
+
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
-                  if (resp == subscribers.get(clientID)) {
-                     //generate random cookie
-                     int rand = (int) (Math.random() * 1000);
-                     cookies.put(rand, clientID);
+                  if (resp.equals(hashedKey)) {
+                    
+
+                     
                      //send AUTH_SUCCESS
                      newTCPPortNum += 1;
-                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + newTCPPortNum, serverSocket, receivedAddress, receivedPort);
+                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + cookies.get(clientID) + " " + newTCPPortNum, serverSocket, receivedAddress, receivedPort);
                      //set user to connecting 
                      clientStates.put(clientID, State.connecting);
                      connectingClients.put(new InetSocketAddress(receivedAddress, receivedPort), clientID);
@@ -177,7 +185,7 @@ public class Server {
                   ServerSocket newTCPSocket = new ServerSocket(newTCPPortNum);
                   UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
                   Socket clientSocket = newTCPSocket.accept();
-                  int secretKey = subscribers.get(connectedClientID);
+                  secretKey = subscribers.get(connectedClientID);
                   
                   Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
                   
@@ -200,7 +208,7 @@ public class Server {
 
       } catch (Exception e) {
          //TODO: handle exception
-         System.out.println("Problem?");
+         System.out.println(e);
       }
    }
 

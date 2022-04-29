@@ -75,7 +75,8 @@ public class User {
 
          //generate response using auth. for now it just returns the number it received
          int rand = Integer.parseInt(rcvTokens[1]);
-         int response = rand;
+         A3 hasher = new A3();
+         String response = hasher.hash(secretKey, rand);
 
          //respond with RESPONSE(Res)
          message = "RESPONSE " + userID + " " + response;
