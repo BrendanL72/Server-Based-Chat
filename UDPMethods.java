@@ -10,6 +10,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 
 
 public class UDPMethods {
@@ -39,6 +40,7 @@ public class UDPMethods {
    static void sendUDPPacket(String message, DatagramSocket socket, InetAddress destIP, int destPort) {
       try {
          byte[] buf = new byte[512];
+         Arrays.fill(buf, (byte)0);
          buf = message.getBytes("UTF-8");
          DatagramPacket sendPacket = new DatagramPacket(buf, buf.length, destIP, destPort);
          socket.send(sendPacket);

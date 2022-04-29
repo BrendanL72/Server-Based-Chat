@@ -43,7 +43,8 @@ public class Server {
       Hashtable<Integer, Integer> cookies = new Hashtable<>();
 
       final int portNumber = 4445;
-      int TCPportnum = portNumber;
+      int TCPportnum = portNumber + 1;
+      int newTCPPortNum = TCPportnum;
 
       //read in the list of valid subscribers to the server
       try {
@@ -69,6 +70,7 @@ public class Server {
       //set up server
       try {
          DatagramSocket serverSocket = new DatagramSocket(portNumber);
+         ServerSocket TCPSocket = new ServerSocket(TCPportnum);
          printServerInfo(serverSocket);
 
          DatagramPacket receivedPacket;
@@ -150,7 +152,8 @@ public class Server {
                      int rand = (int) (Math.random() * 1000);
                      cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
-                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
+                     newTCPPortNum += 1;
+                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + newTCPPortNum, serverSocket, receivedAddress, receivedPort);
                      //set user to connecting 
                      clientStates.put(clientID, State.connecting);
                      connectingClients.put(new InetSocketAddress(receivedAddress, receivedPort), clientID);
@@ -166,22 +169,22 @@ public class Server {
 
                case "CONNECT":
                   //format: CONNECT <rand cookie>
-                  //TODO: change connectedClientID to get the 
-                  TCPportnum += 1;
-                  System.out.println("hello");
+                  //TODO: change connectedClientID to be based on rand cookies
                   InetSocketAddress thingy = new InetSocketAddress(receivedAddress, receivedPort);
                   int connectedClientID = connectingClients.get(thingy);
-                  System.out.println("hello");
-                  Socket clientSocket = new Socket(receivedAddress, receivedPort);
-                  int secretKey = subscribers.get(connectedClientID);
-                  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
-                  newTCPConnection.start();
+
                   //send CONNECTED and create TCP connection and thread
+                  ServerSocket newTCPSocket = new ServerSocket(newTCPPortNum);
                   UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
+                  Socket clientSocket = newTCPSocket.accept();
+                  int secretKey = subscribers.get(connectedClientID);
                   
+                  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  
+                  newTCPConnection.start();
                   //set user to connected
                   clientStates.put(connectedClientID, State.connected);
-                  connectingClients.remove(new InetSocketAddress(receivedAddress, receivedPort));
+                  
                   break;
             
                default:
@@ -192,6 +195,7 @@ public class Server {
             }
          }
          System.out.println("Closing server socket...");
+         TCPSocket.close();
          serverSocket.close();
 
       } catch (Exception e) {

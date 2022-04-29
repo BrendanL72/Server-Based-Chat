@@ -113,17 +113,18 @@ public class User {
                break;
          }
 
+
+         //establish TCP connection and send CONNECT
+         System.out.println("Attempting TCP connection at " + destIPaddress + ":" + newPortNum);
+         Socket socket = new Socket(destIPaddress, newPortNum);
+         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+         BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
          //wait for connected response message
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
          clientSocket.receive(receivedPacket);
          rcvMessage = UDPMethods.byteToString(outBuf);
          System.out.println(rcvMessage);
-
-         //establish TCP connection and send CONNECT
-         System.out.println("Attempting TCP connection...");
-         Socket socket = new Socket(destIPaddress, newPortNum);
-         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
-         BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
          //wait for CONNECTED signal
          System.out.println("TCP connection successful.");
