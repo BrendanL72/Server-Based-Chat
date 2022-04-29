@@ -13,6 +13,7 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 
+
 public class User {
    
    public static void main(String[] args) {
@@ -68,13 +69,15 @@ public class User {
          //wait for AUTH message
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
          clientSocket.receive(receivedPacket);
+         rcvMessage = UDPMethods.byteToString(outBuf);
+         System.out.println(rcvMessage);
          
          rcvMessage = UDPMethods.byteToString(outBuf);
          rcvTokens = rcvMessage.split(" ");
          rcvMessageType = rcvTokens[0];
          int newPortNum = -1;
 
-         System.out.println(message);
+         //System.out.println(message);
          switch (rcvMessageType) {
             case "AUTH_FAIL":
                //commit die
@@ -86,6 +89,7 @@ public class User {
                //parse port number and connect to TCP socket
                newPortNum = Integer.parseInt(rcvTokens[2]);
                //send CONNECTED datagram
+               UDPMethods.sendUDPPacket("CONNECTED", clientSocket, destIPaddress, 4445);
                break;
          
             default:
