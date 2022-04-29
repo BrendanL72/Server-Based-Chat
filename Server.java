@@ -101,9 +101,18 @@ public class Server {
                      }
                      
                      //grab subscriber's secret key
+                     Random r = new Random();
+                     int rand = r.nextInt(1000);
+
+                     System.out.println("Rand: " + rand + " secretKey:" + secretKey);
+                     
+                     A3 hasher = new A3();
+                     String v = hasher.hash(secretKey, rand);
+
+                     System.out.println(v);
 
                      //send CHALLENGE <rand>
-                     UDPMethods.sendUDPPacket("CHALLENGE " + secretKey, serverSocket, receivedAddress, receivedPort);
+                     UDPMethods.sendUDPPacket("CHALLENGE " + rand + " " + secretKey, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
                      clientStates.put(clientID, State.wait_auth);
@@ -115,20 +124,23 @@ public class Server {
                   break;
 
                case "RESPONSE":
-
-               
-                  //format: RESPONSE <client ID> <resp>
-                  if (tokens.length != 2) {
+                  System.out.println("in response now");
+                  //format: RESPONSE <client ID> <resp/secret key>
+                  if (tokens.length != 3) {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
                   int clientID = Integer.parseInt(tokens[1]);
                   int resp = Integer.parseInt(tokens[2]);
                   int secretKey = subscribers.get(clientID);
+                  
+                  //create session object with session key
+                  //add user's secret key to sessions' chatters array
+                  System.out.println("*" + sessions.get(secretKey));
 
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
                   if (sessions.get(secretKey) != null) {
                      //generate random cookie
-                     int rand = (int) (Math.random() * 1000);
+                     int rand = random.nextInt(1000);
                      cookies.put(rand, clientID);
                      //send AUTH_SUCCESS
                      portNumber += 1;
@@ -137,9 +149,11 @@ public class Server {
                      clientStates.put(clientID, State.connecting);
                   }
                   else {
+                     int rand = random.nextInt(1000);
                      //send AUTH_FAIL
-
-                     //set user to offline 
+                     UDPMethods.sendUDPPacket("AUTH_FAIL " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
+                     //set user to offline
+                     clientStates.put(clientID, State.offline);
                   }
                   break;
 
@@ -183,5 +197,4 @@ public class Server {
       System.out.println("New client connected from: " + clientIP);
       
    }
-   
 }

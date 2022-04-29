@@ -53,13 +53,16 @@ public class User {
          rcvMessageType = rcvTokens[0];
 
          System.out.println(rcvMessage);
-         if (!UDPMethods.isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
+         if (!UDPMethods.isExpectedMessage("CHALLENGE", 3, rcvMessage)) {
             System.exit(0);
          }
 
          //generate response using auth. for now it just returns the number it received
          int rand = Integer.parseInt(rcvTokens[1]);
          int response = rand;
+         int secretKey = Integer.parseInt(rcvTokens[2]);
+
+         System.out.println("Secret Key: " + secretKey);
 
          //respond with RESPONSE(Res)
          message = "RESPONSE " + userID + " " + response;
