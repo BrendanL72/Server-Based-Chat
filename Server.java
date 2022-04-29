@@ -12,6 +12,10 @@
 
 import java.util.*;
 import java.util.concurrent.Semaphore;
+import java.util.Random;
+
+import javax.crypto.SecretKey;
+
 import java.net.*;
 
 public class Server {
@@ -37,7 +41,8 @@ public class Server {
       //keeps track of all cookies that have been sent out and 
       Hashtable<Integer, Integer> cookies = new Hashtable<>();
 
-      final int portNumber = 4445;
+      int portNumber = 4445;
+      Random random = new Random();
 
       //set up server
       try {
@@ -80,9 +85,13 @@ public class Server {
                         throw new Exception(message + " has insufficient tokens");
                      }
                      int clientID = Integer.parseInt(tokens[1]);
+                     int secretKey = random.nextInt(1000);
+
+                     subscribers.put(clientID, secretKey);
 
                      //If sender is not a sub, don't do anything
                      if (!subscribers.containsKey(clientID)) {
+                        System.out.println("NO ID FOUND");
                         throw new Exception("Client " + clientID + "not found.");
                      }
 
@@ -92,14 +101,9 @@ public class Server {
                      }
                      
                      //grab subscriber's secret key
-                     int secretKey = subscribers.get(clientID);
 
-                     //add user to memory
-                     subscribers.put(clientID, secretKey);
                      //send CHALLENGE <rand>
-                     //TODO: implement rand properly idk
-                     int rand = secretKey;
-                     UDPMethods.sendUDPPacket("CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
+                     UDPMethods.sendUDPPacket("CHALLENGE " + secretKey, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
                      clientStates.put(clientID, State.wait_auth);
@@ -111,14 +115,18 @@ public class Server {
                   break;
 
                case "RESPONSE":
+
+               
                   //format: RESPONSE <client ID> <resp>
                   if (tokens.length != 2) {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
                   int clientID = Integer.parseInt(tokens[1]);
                   int resp = Integer.parseInt(tokens[2]);
+                  int secretKey = subscribers.get(clientID);
+
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
-                  if (sessions.get(key)) {
+                  if (sessions.get(secretKey) != null) {
                      //generate random cookie
                      int rand = (int) (Math.random() * 1000);
                      cookies.put(rand, clientID);
@@ -139,6 +147,8 @@ public class Server {
                   //format: CONNECT <rand cookie>
                   //send CONNECTED and create TCP connection and thread
                   UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
+                  
+                  clientID = Integer.parseInt(tokens[1]);
 
                   //set user to connected
                   clientStates.put(clientID, State.connected);
