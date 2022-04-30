@@ -10,21 +10,20 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.Thread;
 import java.net.*;
+import java.util.*;
 
 
 public class Connection extends Thread{
 
-   enum State {
-      connected, wait_chat, chatting
-   }
+  
 
-   private State state;
+   private Server.State state;
    private Socket socket;
    private final int clientID;
    private final int secretKey;
 
    public Connection(Socket socket, int clientID, int secretKey) {
-      state = State.connected;
+      state = Server.State.connected;
       this.socket = socket;
       this.clientID = clientID;
       //sets name of thread to the client ID 
@@ -62,21 +61,39 @@ public class Connection extends Thread{
 
                   break;
                case "CHAT_REQUEST":
-                  if (state != State.connected) {
+               System.out.println("IN CHAT REQUEST");
+               //check if connection is connected
+                  if (state != Server.State.connected) {
                      System.out.println("Invalid request from " + clientID +  " due to state.");
                   }
                   else {
+
                      //determine if requested user is available
-                     
-                        //available
-                        
+                     int destID = Integer.parseInt(tokens[1]);
+                     Server.State destState = Server.getClientStatesHashtable(destID); // destination's state
+                     Server.State shouldBe = Server.getClientStatesHashtable(clientID);// "connected"
+                     if(destState.equals(shouldBe)){
+                       //available
+                           System.out.println("INSIDE AVAILABLE");
                            //add new session
-
+                           int[] chatters = {clientID, Integer.parseInt(tokens[1])}; //int[2] of both chatters clientIDs
+                           Session session = new Session(chatters, ++Server.sessionCounter);
+                           Server.putSessionsHashtable(Server.sessionCounter, session);
+                           
                            //change state to chatting
+                           Server.putClientStatesHashtable(clientID, Server.State.chatting);
+                           Server.putClientStatesHashtable(Integer.parseInt(tokens[1]), Server.State.chatting);
+                           
+                           //Send CHAT_STARTED
+                           sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + destID);
+                          
 
+                     }else{
                         //not available
+                        System.out.println("Client-ID " + tokens[1] + " is already in a chat");
+                     }
+                        
 
-                           //do nothing?
                   }
                   break;
 
@@ -90,7 +107,7 @@ public class Connection extends Thread{
                   break;
 
                case "END_REQUEST":
-                  if (state != State.chatting) {
+                  if (state != Server.State.chatting) {
                      System.out.println("Invalid request, not currently chatting with anyone");
                   }
                   else {
@@ -106,8 +123,8 @@ public class Connection extends Thread{
             }
 
             //end connection with client
-            socket.close();
-            System.out.println("TCP connection with " + clientID + " closed");
+          //  socket.close();
+          //  System.out.println("TCP connection with " + clientID + " closed");
       }
       } catch (IOException e) {
          // TODO Auto-generated catch block

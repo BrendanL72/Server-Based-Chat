@@ -22,17 +22,23 @@ public class Server {
       offline, wait_challenge, wait_auth, connecting, connected, wait_chat, chatting
    }
 
+
+   //keep track of each potential client's connection state. (Client ID, Current State of client)
+   private static Hashtable <Integer, State> clientStates = new Hashtable<>(); 
+
+   //Keep track of all chat histories (Session ID, Session)
+   private static Hashtable<Integer, Session> sessions = new Hashtable<>();
+   static int sessionCounter = 0;
+
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
       final int MAX_SECRET_KEY = 1000000;
 
-      //keep track of each potential client's connection state. (Client ID, Current State of client)
-      Hashtable <Integer, State> clientStates = new Hashtable<>(); 
+     
       //subscirbers keeps track of valid client IDs and their corresponding secret keys. (Client ID, Secret Key)
       Hashtable<Integer, Integer> subscribers = new Hashtable<>();
 
-      //Keep track of all chat histories (Session ID, Session)
-      Hashtable<Integer, Session> sessions = new Hashtable<>();
+      
       //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
       Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
 
@@ -190,6 +196,7 @@ public class Server {
                   Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
                   
                   newTCPConnection.start();
+                  
                   //set user to connected
                   clientStates.put(connectedClientID, State.connected);
                   
@@ -226,5 +233,24 @@ public class Server {
       System.out.println("New client connected from: " + clientIP);
       
    }
+
+   //Getter for the clientStates hashtable
+   public static Hashtable getClientStatesHashtable(){
+      return clientStates;
+   }
+
+   //Getter for a state in the clientStates hashtable
+   public static State getClientStatesHashtable(int clinetID){
+      return clientStates.get(clinetID);
+   }
+
+   //Putter for the clientStates hashtable
+   public static void putClientStatesHashtable(int clientID, State state){
+      clientStates.put(clientID, state);
+   }
    
+   //Putter for the sessions hashtable
+   public static void putSessionsHashtable(int value, Session session){
+      sessions.put(value, session);
+   }
 }

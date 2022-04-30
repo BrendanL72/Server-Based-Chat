@@ -130,7 +130,10 @@ public class User {
          //wait for CONNECTED signal
          System.out.println("TCP connection successful.");
 
+/////////////////////////////////////////////////////////////////////////
          //CHAT SESSION SECTION
+/////////////////////////////////////////////////////////////////////////
+
          Scanner scanner = new Scanner(System.in);
          String userInput = "";
          String[] userTokens;
@@ -143,7 +146,8 @@ public class User {
             System.out.print(">");
             userInput = scanner.nextLine();
             userTokens = userInput.split(" ");
-            if (userTokens[0] == "Chat") {
+            System.out.println("Usertoken[0]: " +userTokens[0]);
+            if (userTokens[0].equalsIgnoreCase("Chat")) {
                if (currentlyChatting) {
                   System.out.println("You're already chatting with someone!");
                   break;
@@ -151,7 +155,7 @@ public class User {
                int destID = Integer.parseInt(userTokens[1]);
                //send request to server
                outStream.println("CHAT_REQUEST " + destID);
-               
+               System.out.println("SENT CHAT REQUEST ");
                //wait for server response
                message = inStream.readLine();
                String messageType = message.split(" ")[0];
