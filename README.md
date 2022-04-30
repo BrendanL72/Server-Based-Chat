@@ -18,9 +18,9 @@ Brendan Lim, Kiara Madeam, Cloyd Anacan, Thomas Rogers
 9. To end your connection to the server, type "Log off" and press Enter.
 
 # TO DO
-Finish Server Connection Phase - Brendan
+Finish Server Connection Phase - Brendan : FINISHED
 
-Finish User Connection + Chat Phase - Kiara
+Finish User Connection + Chat Phase - Kiara : FINISHED
 
 Implement Connection.java's message handling (multithreading) - Cloyd + Thomas
 
