@@ -15,6 +15,7 @@ Brendan Lim, Kiara Madeam, Cloyd Anacan, Thomas Rogers
 6. To chat with another user, you must first create a chat session. You can do this by typing 'Chat <target user ID>' and press Enter, where the target user ID is the user ID of the user you would like to talk to. Make sure that the user you are attempting to chat with has also connected successfully.
 7. If connected succesfully, you should see some sort of confirmation message. If so, you may now begin typing message to each other.
 8. To end a chat session, type 'End chat' and press Enter.
+9. To end your connection to the server, type "Log off" and press Enter.
 
 # TO DO
 Finish Server Connection Phase - Brendan
@@ -32,5 +33,7 @@ Authentification
 Encryption
 
 Minor: Chat History 
+  
+Minor: Activity Timer
 
 Documentation!!!!
