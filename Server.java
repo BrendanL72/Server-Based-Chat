@@ -30,6 +30,9 @@ public class Server {
    private static Hashtable<Integer, Session> sessions = new Hashtable<>();
    static int sessionCounter = 0;
 
+   //Keeps track of all TCP connections made (clientID, Connection)
+   private static Hashtable<Integer, Connection> activeConnections = new Hashtable<>();
+
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
       final int MAX_SECRET_KEY = 1000000;
@@ -193,9 +196,17 @@ public class Server {
                   Socket clientSocket = newTCPSocket.accept();
                   secretKey = subscribers.get(connectedClientID);
                   
-                  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
                   
-                  newTCPConnection.start();
+
+                //  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  Connection newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  Thread thread = new Thread(newTCPConnection);
+
+                  //Add the Connection object to active connections hashtable
+                  activeConnections.put(connectedClientID, newTCPConnection);
+
+                  //run the thread
+                  thread.start();
                   
                   //set user to connected
                   clientStates.put(connectedClientID, State.connected);
@@ -252,5 +263,10 @@ public class Server {
    //Putter for the sessions hashtable
    public static void putSessionsHashtable(int value, Session session){
       sessions.put(value, session);
+   }
+
+   //Getter for an active connection
+   public static Connection getActiveConnection(int clientID){
+      return activeConnections.get(clientID);
    }
 }
