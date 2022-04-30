@@ -146,7 +146,6 @@ public class User {
             System.out.print(">");
             userInput = scanner.nextLine();
             userTokens = userInput.split(" ");
-            System.out.println("Usertoken[0]: " +userTokens[0]);
             if (userTokens[0].equalsIgnoreCase("Chat")) {
                if (currentlyChatting) {
                   System.out.println("You're already chatting with someone!");

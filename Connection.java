@@ -21,7 +21,10 @@ public class Connection extends Thread{
    private Socket socket;
    private final int clientID;
    private final int secretKey;
-
+   private int sessionID;
+   private PrintWriter sendClient ;
+   private BufferedReader rcvClient ;
+   
    public Connection(Socket socket, int clientID, int secretKey) {
       state = Server.State.connected;
       this.socket = socket;
@@ -29,13 +32,16 @@ public class Connection extends Thread{
       //sets name of thread to the client ID 
       this.setName(Integer.toString(clientID));
       this.secretKey = secretKey;
+      
    }
+
+   
 
    public void run() {
       try {
          System.out.println("Running new TCP connection for " +  clientID + " at " + socket);
-         PrintWriter sendClient = new PrintWriter(socket.getOutputStream(), true);
-         BufferedReader rcvClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+         sendClient = new PrintWriter(socket.getOutputStream(), true);
+         rcvClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
          System.out.println("New TCP connection created.");
          String message = "";
          String messageType = "";
@@ -78,6 +84,7 @@ public class Connection extends Thread{
                            //add new session
                            int[] chatters = {clientID, Integer.parseInt(tokens[1])}; //int[2] of both chatters clientIDs
                            Session session = new Session(chatters, ++Server.sessionCounter);
+                           this.sessionID = Server.sessionCounter;
                            Server.putSessionsHashtable(Server.sessionCounter, session);
                            
                            //change state to chatting
@@ -86,6 +93,8 @@ public class Connection extends Thread{
                            
                            //Send CHAT_STARTED
                            sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + destID);
+                           Server.getActiveConnection(destID).sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + clientID);
+                           
                           
 
                      }else{
