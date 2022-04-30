@@ -28,7 +28,7 @@ Get it to work - all
 
 -----
 
-Authentification
+Authentification : FINISHED
 
 Encryption
 
