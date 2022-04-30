@@ -84,6 +84,8 @@ public class Connection extends Thread{
                            Server.putClientStatesHashtable(clientID, Server.State.chatting);
                            Server.putClientStatesHashtable(Integer.parseInt(tokens[1]), Server.State.chatting);
                            
+                           //Send CHAT_STARTED
+                           sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + destID);
                           
 
                      }else{
