@@ -143,8 +143,27 @@ public class User {
          System.out.println("To logout, just type \"Log off\"");
 
          while (!userInput.equals("Log off")) {
-            System.out.print(">");
-            userInput = scanner.nextLine();
+            
+            
+            do {
+               System.out.println(">");
+               try {
+                 // wait until we have data to complete a readLine()
+                 while (!inStream.ready()  /*  ADD SHUTDOWN CHECK HERE */) {
+                     System.out.println("Thread sleepin");
+                     Thread.sleep(200);
+                 }
+                 userInput = inStream.readLine();
+               } catch (InterruptedException e) {
+                 System.out.println("ConsoleInputReadTask() cancelled");
+               }
+             } while ("".equals(userInput));
+             System.out.println("Thank You for providing input!");
+             
+
+
+
+
             userTokens = userInput.split(" ");
             if (userTokens[0].equalsIgnoreCase("Chat")) {
                if (currentlyChatting) {
