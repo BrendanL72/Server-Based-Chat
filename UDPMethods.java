@@ -2,6 +2,7 @@
    Should probably rename this lol
 
    Here is a bunch of helpful methods that were useful for both User and Server UDP Socket sending
+   TODO: improve sendUDPPacket
 */
 
 import java.io.IOException;
