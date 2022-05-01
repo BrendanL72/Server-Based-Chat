@@ -30,7 +30,7 @@ Get it to work - all
 
 Authentification : FINISHED
 
-Encryption
+Encryption : FINISHED
 
 Minor: Chat History 
   

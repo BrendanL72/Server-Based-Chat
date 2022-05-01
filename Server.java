@@ -165,8 +165,6 @@ public class Server {
 
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
                   if (resp.equals(hashedKey)) {
-                    
-
                      
                      //send AUTH_SUCCESS
                      newTCPPortNum += 1;

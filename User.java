@@ -68,7 +68,7 @@ public class User {
          rcvTokens = rcvMessage.split(" ");
          rcvMessageType = rcvTokens[0];
 
-         System.out.println(rcvMessage);
+         System.out.println(rcvMessage + "%");
          if (!UDPMethods.isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
             System.exit(0);
          }
