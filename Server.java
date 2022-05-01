@@ -268,6 +268,9 @@ public class Server {
 
    public static Server.State getUserState(int clientID) {
       //get thread
+      if (getActiveConnection(clientID) == null) {
+         return Server.State.offline;
+      }
       return getActiveConnection(clientID).getUserState();
    } 
 

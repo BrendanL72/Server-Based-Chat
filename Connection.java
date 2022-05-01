@@ -6,14 +6,13 @@
    create two threads to handle client TCP messages and messages from the server 
 */
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.lang.Thread;
 import java.net.*;
-import java.util.*;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.LinkedBlockingQueue;
 
 
 public class Connection extends Thread{
@@ -32,7 +31,7 @@ public class Connection extends Thread{
       //sets name of thread to the client ID 
       this.setName(Integer.toString(clientID));
       this.secretKey = secretKey;
-      
+      messageQueue = new LinkedBlockingQueue<Message>();
    }
    
 
@@ -40,6 +39,7 @@ public class Connection extends Thread{
       System.out.println("Running new TCP connection for " +  clientID + " at " + socket);
       //create thread to wait for client messages and them to the message queue
       Thread clientMessageHandler = new ConnectionTCPReader(socket, messageQueue);
+      clientMessageHandler.start();
 
       //write to TCP connections
       try {
@@ -74,6 +74,8 @@ public class Connection extends Thread{
          tokens = actualMessage.split(" ");
          messageType = tokens[0];
 
+         System.out.println(actualMessage);
+
          switch (messageOrigin) {
             case "Client":
                switch (messageType) {
@@ -103,8 +105,7 @@ public class Connection extends Thread{
                      //available
                      if (targetUserState == Server.State.connected) {
                            //create new session
-                           int[] sessionUsers = new int[]{clientID};
-                           sessionUsers[sessionUsers.length] = targetClientID;
+                           int[] sessionUsers = new int[]{this.clientID, targetClientID};
 
                            //create unique session id
                            int newSessionID = 0;
@@ -163,6 +164,7 @@ public class Connection extends Thread{
                      break;
                
                   default:
+                     System.out.println("Unfamiliar Client Message: " + actualMessage);
                      break;
                }
                break;
