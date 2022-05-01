@@ -11,8 +11,8 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
-
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class User {
    
@@ -114,12 +114,12 @@ public class User {
                break;
          }
 
-
+         // dont need this anymore?????
          //establish TCP connection and send CONNECT
          System.out.println("Attempting TCP connection at " + destIPaddress + ":" + newPortNum);
          Socket socket = new Socket(destIPaddress, newPortNum);
-         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
-         BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+         //PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+         //BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
          //wait for connected response message
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
@@ -137,23 +137,129 @@ public class User {
          Scanner scanner = new Scanner(System.in);
          String userInput = "";
          String[] userTokens;
-         boolean currentlyChatting = false;
+         //boolean currentlyChatting = false;
+         BlockingQueue<Message> q = new LinkedBlockingQueue<Message>();
 
          System.out.println("To initiate chat, type: Chat <target user ID>");
          System.out.println("To logout, just type \"Log off\"");
 
          /**
-          * this is where i've started inplementing the chat phase
+          * this is where i've started implementing the chat phase
           */
+         //thread for tcp input
+         // thread for user input
+         new UserTCPReader(socket, q);
+         new UserReader(q);
 
+         userInput = scanner.nextLine();
+
+//         if(!userInput.isEmpty)
+//         {
+//
+//         }
          while (!userInput.equals("Log off")) {
             // create both data streams
 
+
             // create UserTCPReader thread (listening thread)
+            //new UserTCPReader(socket);
+
+            // outstream writes to server
+            // instream reads from server
+            long sessionID = -1;
+            int partnerID = -1;
+            PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String[] packetTokens;
+
+            userInput = scanner.nextLine();
+            userTokens = userInput.split(" ");
+            //sendMessage(userInput);
+
+            // how do i implement the queue ?? ****
+
+            /** listens to packets from server */
+            //try
+            //{
+               // DECRYPT THE PACKET***
+               String gotPacket = inStream.readLine();
+               gotPacket = receivePacket(new Message("TCP", gotPacket));
+               // SHOULD WE HAVE A ISCHATTING BOOL? no
+               packetTokens = gotPacket.split(" ");
+
+               if(packetTokens[0].toUpperCase().equals("UNREACHABLE"))
+               {
+                  System.out.println("Correspondent unreachable");
+                  break;
+               }
+               else if(packetTokens[0].toUpperCase().equals("END_NOTIF"))
+               {
+                  // CALL SEND PACKET FUNCTION
+                  System.out.println("Chat ended");
+                  break;
+               }
+               else if(packetTokens[0].toUpperCase().equals("CHAT_STARTED"))
+               {
+                  Date d = new Date(95, 1, 15);
+
+                  System.out.println("Chat started");
+                  sessionID = d.getTime();
+                  System.out.println("Session ID: " + sessionID);
+                  break;
+               }
+
+//            }
+//            catch()
+//            {
+//
+//            }
+
+            /** looks at user input*/
+            //try
+            //{
+               // encrypt tcp mssg
+               // write object to server with tcp
+               // read from server
+               // decrypt
+
+
+
+               if(userTokens[0].toUpperCase().equals("HISTORY"))
+               {
+                  // HISTORY REQUEST FUNCTION
+                  // send packet to server to request chat history
+               }
+               else if(userTokens[0].toUpperCase().equals("END") && userTokens[1].toUpperCase().equals("CHAT"))
+               {
+                  // END_REQUEST FUNCTION
+                  // send packet to server to destroy tcp connection
+                  break;
+               }
+               else if(userTokens[0].toUpperCase().equals("CHAT"))
+               {
+                  //CHAT_STARTED FUNCTION
+                  // wait for input from user
+                  break;
+               }
+               //else
+               //{
+                  //maybe now it can be send packet (send to other client)
+                  //String encryptedChat = sendPacket(userInput);
+                  //*** send tcp packet
+               //}
+
+               String encryptedChat = sendPacket(new Message("USER", gotPacket));
+            //}
+//            catch()
+//            {
+//
+//            }
+
 
             // while(true) {} or while(!userinput.equals("log off")
             // .writeobject() sends mssg to server
-            // sendmessage(new Message( ,userinput))
+            // sendmessage(new Message("USER",userinput))
+
          }
 
          scanner.close();
@@ -172,9 +278,53 @@ public class User {
       
    }
 
+
+   // lol might not need this either
+// kidding maybe make this return a string
+   public static String sendPacket(Message msg)
+   {
+//   try{
+      // encrypt tcp mssg
+
+      //A8 encrypt = new A8();
+      //int key = encrypt.cipherKey(secretKey, rand)
+
+      // write object to server with tcp
+
+
+      return "-1";
+//   }
+//   catch()
+//   {
+//
+//   }
+      // once message is done processing, remove from queue (someone else remind me of the syntax for that?)
+   }
+
+   // kidding maybe we dont need this
+   // kidding maybe make this return a string
+   public static String receivePacket(Message msg)
+   {
+//   try{
+      // read from server
+      // decrypt packet msg
+
+      // A8 decrypt = newA8();
+      // int key = decrypt.cipherKey(secretKey, rand)
+
+      // return decrypted msg?
+
+
+      return "-1";
+//   }
+//   catch()
+//   {
+//
+//   }
+   }
 }
 
-sendMessage function
+
 
 /*
 while (!userInput.equals("Log off")) {
