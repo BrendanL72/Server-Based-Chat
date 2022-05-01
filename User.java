@@ -142,45 +142,20 @@ public class User {
          System.out.println("To initiate chat, type: Chat <target user ID>");
          System.out.println("To logout, just type \"Log off\"");
 
+         /**
+          * this is where i've started inplementing the chat phase
+          */
+
          while (!userInput.equals("Log off")) {
-            userInput = scanner.nextLine();
-            userTokens = userInput.split(" ");
-            if (userTokens[0].equalsIgnoreCase("Chat")) {
-               if (currentlyChatting) {
-                  System.out.println("You're already chatting with someone!");
-                  break;
-               }
-               int destID = Integer.parseInt(userTokens[1]);
-               //send request to server
-               outStream.println("CHAT_REQUEST " + destID);
-               System.out.println("SENT CHAT REQUEST ");
-               //wait for server response
-               message = inStream.readLine();
-               String messageType = message.split(" ")[0];
-               if (messageType.equals("CHAT_STARTED")) {
-                  //chat started
-                  System.out.println("Chat started");
-                  currentlyChatting = true;
-               }
-               else if (messageType.equals("UNREACHABLE")) {
-                  System.out.println("Sorry, user " + destID + " was not available.");
-               }
-               else {
-                  System.out.println("ERROR: Server sent invalid message. Expected CHAT_STARTED or UNREACHABLE");
-               }
-            }
-            else if (userInput == "Log off") {
-               break;
-            }
-            else if (userInput == "End chat"){
-               //end connection with user B
-                
-            }
-            else {
-               //normal chat (change this)
-               outStream.println(userInput);
-            }
+            // create both data streams
+
+            // create UserTCPReader thread (listening thread)
+
+            // while(true) {} or while(!userinput.equals("log off")
+            // .writeobject() sends mssg to server
+            // sendmessage(new Message( ,userinput))
          }
+
          scanner.close();
          socket.close();
 
@@ -198,3 +173,46 @@ public class User {
    }
 
 }
+
+sendMessage function
+
+/*
+while (!userInput.equals("Log off")) {
+   userInput = scanner.nextLine();
+   userTokens = userInput.split(" ");
+            if (userTokens[0].equalsIgnoreCase("Chat")) {
+      if (currentlyChatting) {
+         System.out.println("You're already chatting with someone!");
+         break;
+      }
+      int destID = Integer.parseInt(userTokens[1]);
+      //send request to server
+      outStream.println("CHAT_REQUEST " + destID);
+      System.out.println("SENT CHAT REQUEST ");
+      //wait for server response
+      message = inStream.readLine();
+      String messageType = message.split(" ")[0];
+      if (messageType.equals("CHAT_STARTED")) {
+         //chat started
+         System.out.println("Chat started");
+         currentlyChatting = true;
+      }
+      else if (messageType.equals("UNREACHABLE")) {
+         System.out.println("Sorry, user " + destID + " was not available.");
+      }
+      else {
+         System.out.println("ERROR: Server sent invalid message. Expected CHAT_STARTED or UNREACHABLE");
+      }
+   }
+            else if (userInput == "Log off") {
+      break;
+   }
+            else if (userInput == "End chat"){
+      //end connection with user B
+
+   }
+            else {
+      //normal chat (change this)
+      outStream.println(userInput);
+   }
+}*/
