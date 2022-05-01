@@ -22,8 +22,8 @@ public class Connection extends Thread{
    private final int clientID;
    private final int secretKey;
    private int sessionID;
-   private PrintWriter sendClient ;
-   private BufferedReader rcvClient ;
+   private PrintWriter sendClient;
+   private BufferedReader rcvClient;
    
    public Connection(Socket socket, int clientID, int secretKey) {
       state = Server.State.connected;
