@@ -9,8 +9,6 @@
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
-import javax.sound.midi.SysexMessage;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.File;
@@ -31,7 +29,7 @@ public class Server {
    static int sessionCounter = 0;
 
    //Keeps track of all TCP connections made (clientID, Connection)
-   private static Hashtable<Integer, Connection> activeConnections = new Hashtable<>();
+   protected static Hashtable<Integer, Connection> activeConnections = new Hashtable<>();
 
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
@@ -48,7 +46,7 @@ public class Server {
       //Keep track of all authenticated connecting clients
       Hashtable<InetSocketAddress, Integer> connectingClients = new Hashtable<>();
 
-      //keeps track of all cookies that have been sent out and 
+      //keeps track of all cookies that have been sent out
       Hashtable<Integer, Integer> cookies = new Hashtable<>();
 
       final int portNumber = 4445;
@@ -244,7 +242,7 @@ public class Server {
    }
 
    //Getter for the clientStates hashtable
-   public static Hashtable getClientStatesHashtable(){
+   public static Hashtable<Integer, State> getClientStatesHashtable(){
       return clientStates;
    }
 
@@ -267,4 +265,18 @@ public class Server {
    public static Connection getActiveConnection(int clientID){
       return activeConnections.get(clientID);
    }
+
+   public static Server.State getUserState(int clientID) {
+      //get thread
+      return getActiveConnection(clientID).getUserState();
+   } 
+
+   public static Session getSession(int sessionID) {
+      return sessions.get(sessionID);
+   }
+
+   public static Set<Integer> getSessionsIDs() {
+      return sessions.keySet();
+   }
+
 }

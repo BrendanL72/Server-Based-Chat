@@ -7,6 +7,7 @@ public class TestThread extends Thread{
    }
 
    public void run() {
+      System.out.println(testfile.hi);
       System.out.println("hi");
       q.add(10);
    }

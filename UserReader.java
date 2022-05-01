@@ -1,9 +1,13 @@
+/*
+   UserReader is created by User to read in chat messages entered by the user.
+*/
+
 import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 
 public class UserReader extends Thread{
    
-   BlockingQueue<Message> q;
+   private BlockingQueue<Message> q;
    public UserReader(BlockingQueue<Message> q){
       this.q = q;
    }

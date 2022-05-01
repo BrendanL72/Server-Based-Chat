@@ -2,6 +2,8 @@
    Connection represents the server-side handling of a client's chat phase.
    It is created by the server when a new client successfully connects to the server and the server creates a TCP sockett to communicate with them
 
+   TODO:
+   create two threads to handle client TCP messages and messages from the server 
 */
 
 import java.io.BufferedReader;
@@ -11,22 +13,20 @@ import java.io.PrintWriter;
 import java.lang.Thread;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 
 public class Connection extends Thread{
-
-  
 
    private Server.State state;
    private Socket socket;
    private final int clientID;
    private final int secretKey;
-   private int sessionID;
    private PrintWriter sendClient;
-   private BufferedReader rcvClient;
+   private BlockingQueue<Message> messageQueue;
    
    public Connection(Socket socket, int clientID, int secretKey) {
-      state = Server.State.connected;
+      this.state = Server.State.connected;
       this.socket = socket;
       this.clientID = clientID;
       //sets name of thread to the client ID 
@@ -34,114 +34,190 @@ public class Connection extends Thread{
       this.secretKey = secretKey;
       
    }
-
    
 
    public void run() {
+      System.out.println("Running new TCP connection for " +  clientID + " at " + socket);
+      //create thread to wait for client messages and them to the message queue
+      Thread clientMessageHandler = new ConnectionTCPReader(socket, messageQueue);
+
+      //write to TCP connections
       try {
-         System.out.println("Running new TCP connection for " +  clientID + " at " + socket);
          sendClient = new PrintWriter(socket.getOutputStream(), true);
-         rcvClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-         System.out.println("New TCP connection created.");
-         String message = "";
-         String messageType = "";
-         String[] tokens;
-
-         //service any messages sent by the user
-         while (!messageType.equals("END_REQUEST")) {
-            //read message and split into tokens
-            message = rcvClient.readLine();
-            tokens = message.split(" ");
-            messageType = tokens[0];
-
-            //determine behavior based on message header
-            switch (messageType) {
-               case "CHAT":
-                  //format CHAT <session ID> <chat message>
-                  int sessionID = Integer.parseInt(tokens[1]);
-                  String chatMessage = tokens[2];
-                  //send message to session/other user
-                  
-                  //add message to chat history
-                  
-
-                  break;
-               case "CHAT_REQUEST":
-               System.out.println("IN CHAT REQUEST");
-               //check if connection is connected
-                  if (state != Server.State.connected) {
-                     System.out.println("Invalid request from " + clientID +  " due to state.");
-                  }
-                  else {
-
-                     //determine if requested user is available
-                     int destID = Integer.parseInt(tokens[1]);
-                     Server.State destState = Server.getClientStatesHashtable(destID); // destination's state
-                     Server.State shouldBe = Server.getClientStatesHashtable(clientID);// "connected"
-                     if(destState.equals(shouldBe)){
-                       //available
-                           System.out.println("INSIDE AVAILABLE");
-                           //add new session
-                           int[] chatters = {clientID, Integer.parseInt(tokens[1])}; //int[2] of both chatters clientIDs
-                           Session session = new Session(chatters, ++Server.sessionCounter);
-                           this.sessionID = Server.sessionCounter;
-                           Server.putSessionsHashtable(Server.sessionCounter, session);
-                           
-                           //change state to chatting
-                           Server.putClientStatesHashtable(clientID, Server.State.chatting);
-                           Server.putClientStatesHashtable(Integer.parseInt(tokens[1]), Server.State.chatting);
-                           
-                           //Send CHAT_STARTED
-                           sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + destID);
-                           Server.getActiveConnection(destID).sendClient.println("CHAT_STARTED " + Server.sessionCounter + " " + clientID);
-                           
-                          
-
-                     }else{
-                        //not available
-                        System.out.println("Client-ID " + tokens[1] + " is already in a chat");
-                     }
-                        
-
-                  }
-                  break;
-
-               case "HISTORY_REQ":
-                  //determine target id
-
-                  //get access 
-                  //send history responses, one packet per line
-
-                  
-                  break;
-
-               case "END_REQUEST":
-                  if (state != Server.State.chatting) {
-                     System.out.println("Invalid request, not currently chatting with anyone");
-                  }
-                  else {
-                     //skip to end of while loop to exit loop
-                     continue;
-                  }
-                  break;
-                  
-               default:
-                  System.out.println("ERROR: Invalid or unrecognized message type: " + messageType);
-                  System.out.println("Message: " + message);
-                  break;
-            }
-
-            //end connection with client
-          //  socket.close();
-          //  System.out.println("TCP connection with " + clientID + " closed");
-      }
       } catch (IOException e) {
          // TODO Auto-generated catch block
-         System.out.println("ERROR: Client " + clientID +  " input or output not found.");
          e.printStackTrace();
       }
-      
+
+      Session currentSession = null;
+
+      //message parsing variables
+      Message message = null;
+      String actualMessage = "";
+      String messageType = "";
+      String messageOrigin = "";
+      String[] tokens;
+
+      //other parsing variables that java is being annoying about
+      int targetClientID;
+
+      while (!messageType.equals("END_CONNECTION")) {
+         try {
+            message = messageQueue.take();
+         } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+         //finest Italian cuisine offered here
+         actualMessage = message.message;
+         messageOrigin = message.messageType;
+         tokens = actualMessage.split(" ");
+         messageType = tokens[0];
+
+         switch (messageOrigin) {
+            case "Client":
+               switch (messageType) {
+                  case "CHAT":
+                     //format: CHAT <session ID> <chat message>
+                     int sessionID = Integer.parseInt(tokens[1]);
+                     String chatMessage = tokens[2];
+                     //send message to session/other user
+                        //get other user from sessions
+                        int users[] = Server.getSession(sessionID).getMembers();
+                        for (int userID : users) {
+                           if (userID != this.clientID) {
+                              //send the other user's connection the chat message
+                              messageOtherConnection(userID, chatMessage);
+                           }
+                        }
+                        
+                     //add message to chat history
+                     break;
+
+                  case "CHAT_REQUEST":
+                     //format: CHAT_REQUEST <dest client ID>
+                     targetClientID = Integer.parseInt(tokens[1]);
+                     Server.State targetUserState = Server.getUserState(targetClientID);
+
+                     //determine if requested user is available 
+                     //available
+                     if (targetUserState == Server.State.connected) {
+                           //create new session
+                           int[] sessionUsers = new int[]{clientID};
+                           sessionUsers[sessionUsers.length] = targetClientID;
+
+                           //create unique session id
+                           int newSessionID = 0;
+                           do {
+                              newSessionID = (int) Math.random()*1000000;
+                           } while (Server.getSessionsIDs().contains(newSessionID));
+                           
+                           currentSession = new Session(sessionUsers, newSessionID);
+                           Server.putSessionsHashtable(newSessionID, currentSession);
+                           
+                           //inform the other user's connection
+                           messageOtherConnection(targetClientID, "SESSION_STARTED " + newSessionID + " " + this.clientID);
+
+                           //change state to chatting
+                           this.state = Server.State.chatting;
+                     }
+                     //not available
+                     else {
+                        //send unreachable
+                        sendClient.println("UNREACHABLE " + clientID);
+                     }
+                     break;
+
+                  case "HISTORY_REQ":
+                     //format: HISTORY_REQ <target client ID>
+
+                     //determine target id
+
+                     //get access to session history
+
+                     //send history responses, one packet per line
+                     break;
+
+                  case "END_REQUEST":
+                     //format: END_REQUEST <session-ID>
+                     if (state != Server.State.chatting) {
+                        System.out.println("Invalid request, not currently chatting with anyone");
+                     }
+                     else {
+                        //get members of session
+                        int[] sessionMembers = currentSession.getMembers();
+                        
+                        //inform other client that session has ended 
+                        for (int userID : sessionMembers) {
+                           if (userID != this.clientID) {
+                              messageOtherConnection(userID, "SESSION_ENDED " + currentSession.getSessionID());
+                           }
+                        }
+
+                        //set user state to connected
+                        this.state = Server.State.connected;
+                        //make current session none
+                        currentSession = null;
+                     }
+
+                     break;
+               
+                  default:
+                     break;
+               }
+               break;
+         
+            case "Server":
+               switch (messageType) {
+                  case "CHAT":
+                     //other client sent a chat, send it to our client
+                     sendClient.println(actualMessage);
+
+                  case "SESSION_STARTED":
+                     //format SESSION_STARTED session_id clientID
+                     //another client started a session with this user
+                     int newSessionID = Integer.parseInt(tokens[1]);
+                     targetClientID = Integer.parseInt(tokens[2]);
+
+                     //add session as current session
+                     currentSession = Server.getSession(newSessionID);
+
+                     //inform this client about the started session 
+                     sendClient.println("CHAT_STARTED " + newSessionID + " " + targetClientID);
+                     //change state to active chat
+                     this.state = Server.State.chatting;
+                     break;
+
+                  case "SESSION_ENDED":
+                     //another client sent a request to end the session
+                     //send packet to inform the user
+                     int sessionID = Integer.parseInt(tokens[1]);
+                     sendClient.println("END_NOTIF " + sessionID);
+                     //change user state to connected
+                     this.state = Server.State.connected;
+                     break;
+               
+                  default:
+                     break;
+               }
+               break;
+            default:
+               System.out.println("Unknown packet source");
+               break;
+         }
+      }
    }
 
+   public BlockingQueue<Message> getMessageQueue() {
+      return messageQueue;
+   }
+
+   public Server.State getUserState() {
+      return this.state;
+   }
+
+   private static void messageOtherConnection(int targetClientID, String message) {
+      Server.getActiveConnection(targetClientID).messageQueue.add(new Message("Server", message));
+   }
 
 }
