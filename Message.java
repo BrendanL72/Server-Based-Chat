@@ -1,7 +1,7 @@
 public class Message {
    
-    String message;
-    String messageType;
+    public String message;
+    public String messageType;
 
     public Message(String source, String m)
     {

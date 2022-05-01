@@ -12,7 +12,7 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.*;
 
 public class User {
    
@@ -148,8 +148,10 @@ public class User {
           */
          //thread for tcp input
          // thread for user input
-         new UserTCPReader(socket, q);
-         new UserReader(q);
+         Thread tcpRead = new UserTCPReader(socket, q);
+         tcpRead.start();
+         Thread userRead = new UserReader(q);
+         userRead.start();
 
          userInput = scanner.nextLine();
 
@@ -157,7 +159,7 @@ public class User {
 //         {
 //
 //         }
-         while (!userInput.equals("Log off")) {
+         while (!userInput.toUpperCase().equals("LOG OFF")) {
             // create both data streams
 
 
@@ -169,11 +171,136 @@ public class User {
             long sessionID = -1;
             int partnerID = -1;
             PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            String[] packetTokens;
+            //BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            //String[] packetTokens;
+            //String[] userTokens;
+            //DECRYPT THE PACKET ***
+            //String gotPacket = inStream.readLine();
+            //q.add(new Message("Server", gotPacket));
 
-            userInput = scanner.nextLine();
-            userTokens = userInput.split(" ");
+            // pop off the queue?
+            /**
+             * user types initate chat
+             * client writes chat_request
+             * client reads chat_started
+             * client display user chat started
+             * user sends chat -> client writes to server -> writes to other client -> client displays to user
+             * ^^ repeats
+             * user sends end chat
+             * client writes end_request to server
+             * server writes end_notification to client
+             * client displays chat ended to user
+             */
+
+            try
+            {
+               //q.take() throws interrupted exception e
+               Message nextTask = q.take();
+               String messageType = nextTask.messageType;
+               String input = nextTask.message;
+
+               if(messageType.toUpperCase().equals("SERVER"))
+               {
+                  //***DECRYPT PACKET
+                  String[] packetTokens = message.split(" ");
+                  switch(packetTokens[0])
+                  {
+                     case "UNREACHABLE":
+                        // READ UNREACHABLE
+                        // DISPLAY CORRESPONDENT UNREACHABLE
+                        System.out.println("CORRESPONDENT UNREACHABLE");
+                        break;
+                     case "END_NOTIF":
+                        // READ END_NOTIF SESSIONID
+                        // DISPLAY CHAT SESSIONID ENDED
+                        System.out.println(sessionID + " ENDED");
+                        break;
+                     case "CHAT_REQUEST":
+                        // READ CHAT_REQUEST CLIENTID
+                        // DISPLAY CHAT REQUEST CLIENTID
+                        partnerID = Integer.valueOf(packetTokens[1]);
+                        System.out.println("CHAT REQUEST " + partnerID);
+                        break;
+                     case "CHAT_STARTED":
+                        // READ CHAT_STARTED CLIENTID
+                        // DISPLAY CHAT SESSIONID STARTED
+                        sessionID = Integer.valueOf(packetTokens[1]);
+                        System.out.println("CHAT " + sessionID + " STARTED");
+                        break;
+                     case "CHAT":
+                        // READ CHAT SESSIONID MESSAGE
+                        // DISPLAY @ MESSAGE
+                        System.out.println("@" + packetTokens[2]);
+                        break;
+                     case "HISTORY_RESP":
+                        // READ HISTORY_RESP SENDINGCLIENTID MESSAGE
+                        // DISPLAY SENDINGCLIENT MESSAGE (1111 @HI THERE)
+                        System.out.println("CHAT HISTORY: *** NOT YET WORKING");
+                        System.out.println(""/**CHAT HISTORY*/);
+                        break;
+                     default:
+
+                        break;
+                  }
+               }
+               else if(messageType.toUpperCase().equals("USER")) {
+                  userTokens = message.split(" ");
+                  switch (userTokens[0]) {
+                     case "END":
+                        // USER SENDS END CHAT
+                        // WRITE END_REQUEST SESSIONID
+
+                        //***ENCRYPT PACKET
+                        outStream.println("END_REQUEST " + sessionID);
+                        //outStream.println(new Message());
+                        break;
+                     case "CHAT":
+                        // USED SENDS CHAT CLIENTID B
+                        // WRITE CHAT_REQUEST CLIENTID MESSAGE
+                        //Date d = new Date(95, 1, 15);
+                        //sessionID = d.getTime();
+
+                        partnerID = Integer.valueOf(userTokens[1]);
+
+                        //***ENCRYPT PACKET
+                        outStream.println("CHAT_REQUEST " + partnerID);
+                        break;
+                     case "@":
+                        // SENDING MESSAGES BETWEEN CLIENTS
+                        // USER SENDS @ MESSAGE
+                        // WRITE CHAT SESSIONID MESSAGE
+
+                        String userMssg = "";
+
+                        for (int i = 2; i < userTokens.length; i++) {
+                           userMssg.concat(userTokens[i] + " ");
+                        }
+                        //***ENCRYPT PACKET
+                        outStream.println("CHAT " + sessionID + userMssg);
+                        break;
+                     case "HISTORY":
+                        // USER SENDS SHOW HISTORY
+                        // WRITE HISTORY_REQ CLIENTID
+
+                        //***ENCRYPT PACKET
+
+                        break;
+                     default:
+                        //KEEP WAITING FOR USER INPUT
+                        break;
+                  }
+               }
+            }
+            catch(InterruptedException e)
+            {
+               System.out.println(e);
+            }
+
+
+
+            //userInput = scanner.nextLine();
+            //userTokens = userInput.split(" ");
+            //q.add(new Message("User", userInput))
             //sendMessage(userInput);
 
             // how do i implement the queue ?? ****
@@ -182,75 +309,77 @@ public class User {
             //try
             //{
                // DECRYPT THE PACKET***
-               String gotPacket = inStream.readLine();
-               gotPacket = receivePacket(new Message("TCP", gotPacket));
+               //String gotPacket = inStream.readLine();
+               //gotPacket = receivePacket(new Message("TCP", gotPacket));
                // SHOULD WE HAVE A ISCHATTING BOOL? no
-               packetTokens = gotPacket.split(" ");
 
-               if(packetTokens[0].toUpperCase().equals("UNREACHABLE"))
-               {
-                  System.out.println("Correspondent unreachable");
-                  break;
-               }
-               else if(packetTokens[0].toUpperCase().equals("END_NOTIF"))
-               {
-                  // CALL SEND PACKET FUNCTION
-                  System.out.println("Chat ended");
-                  break;
-               }
-               else if(packetTokens[0].toUpperCase().equals("CHAT_STARTED"))
-               {
-                  Date d = new Date(95, 1, 15);
 
-                  System.out.println("Chat started");
-                  sessionID = d.getTime();
-                  System.out.println("Session ID: " + sessionID);
-                  break;
-               }
-
-//            }
-//            catch()
-//            {
 //
-//            }
-
-            /** looks at user input*/
-            //try
-            //{
-               // encrypt tcp mssg
-               // write object to server with tcp
-               // read from server
-               // decrypt
-
-
-
-               if(userTokens[0].toUpperCase().equals("HISTORY"))
-               {
-                  // HISTORY REQUEST FUNCTION
-                  // send packet to server to request chat history
-               }
-               else if(userTokens[0].toUpperCase().equals("END") && userTokens[1].toUpperCase().equals("CHAT"))
-               {
-                  // END_REQUEST FUNCTION
-                  // send packet to server to destroy tcp connection
-                  break;
-               }
-               else if(userTokens[0].toUpperCase().equals("CHAT"))
-               {
-                  //CHAT_STARTED FUNCTION
-                  // wait for input from user
-                  break;
-               }
-               //else
-               //{
-                  //maybe now it can be send packet (send to other client)
-                  //String encryptedChat = sendPacket(userInput);
-                  //*** send tcp packet
-               //}
-
-               String encryptedChat = sendPacket(new Message("USER", gotPacket));
             //}
-//            catch()
+//            catch()packetTokens = gotPacket.split(" ");
+////
+////               if(packetTokens[0].toUpperCase().equals("UNREACHABLE"))
+////               {
+////                  System.out.println("Correspondent unreachable");
+////                  break;
+////               }
+////               else if(packetTokens[0].toUpperCase().equals("END_NOTIF"))
+////               {
+////                  // CALL SEND PACKET FUNCTION
+////                  System.out.println("Chat ended");
+////                  break;
+////               }
+////               else if(packetTokens[0].toUpperCase().equals("CHAT_STARTED"))
+////               {
+////                  Date d = new Date(95, 1, 15);
+////
+////                  System.out.println("Chat started");
+////                  sessionID = d.getTime();
+////                  System.out.println("Session ID: " + sessionID);
+////                  break;
+////               }
+////
+//////            }
+//////            catch()
+//////            {
+//////
+//////            }
+////
+////            /** looks at user input*/
+////            //try
+////            //{
+////               // encrypt tcp mssg
+////               // write object to server with tcp
+////               // read from server
+////               // decrypt
+////
+////
+////
+////               if(userTokens[0].toUpperCase().equals("HISTORY"))
+////               {
+////                  // HISTORY REQUEST FUNCTION
+////                  // send packet to server to request chat history
+////               }
+////               else if(userTokens[0].toUpperCase().equals("END") && userTokens[1].toUpperCase().equals("CHAT"))
+////               {
+////                  // END_REQUEST FUNCTION
+////                  // send packet to server to destroy tcp connection
+////                  break;
+////               }
+////               else if(userTokens[0].toUpperCase().equals("CHAT"))
+////               {
+////                  //CHAT_STARTED FUNCTION
+////                  // wait for input from user
+////                  break;
+////               }
+////               //else
+////               //{
+////                  //maybe now it can be send packet (send to other client)
+////                  //String encryptedChat = sendPacket(userInput);
+////                  //*** send tcp packet
+////               //}
+////
+////               String encryptedChat = sendPacket(new Message("USER", gotPacket));
 //            {
 //
 //            }

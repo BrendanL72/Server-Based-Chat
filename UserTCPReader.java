@@ -30,7 +30,8 @@ public class UserTCPReader extends Thread{
         while(true)
         {
             try {
-                messageQueue.add(new Message("TCP", inStream.readLine()));
+                messageQueue.add(new Message("Server", inStream.readLine()));
+                // decrypt? ***
                 System.out.println("tcp mssg added to queue");
             } catch (IOException e) {
                 // TODO Auto-generated catch block
