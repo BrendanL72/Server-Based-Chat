@@ -1,16 +1,17 @@
 import java.util.Scanner;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class testfile {
    public static void main(String[] args) {
-      Scanner scanner = new Scanner(System.in);
-      int i = 0;
+      BlockingQueue<Integer> queue = new LinkedBlockingQueue<Integer>();
+      Thread test = new TestThread(queue);
+      test.start();
       while (true) {
-         if (scanner.hasNextLine()) {
-            System.out.println(scanner.nextLine());
-         }
-         else {
-            System.out.println(i++);
+         if (!queue.isEmpty()) {
+            System.out.println(queue.remove());
          }
       }
    }
 }
+
