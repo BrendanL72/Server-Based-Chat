@@ -38,8 +38,8 @@ public class Server {
      
       //subscirbers keeps track of valid client IDs and their corresponding secret keys. (Client ID, Secret Key)
       Hashtable<Integer, Integer> subscribers = new Hashtable<>();
-
       
+
       //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
       Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
 

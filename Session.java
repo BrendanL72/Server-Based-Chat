@@ -10,7 +10,7 @@ public class Session {
    private int[] chatters = new int[2];
    private int sessionID;
    //change to keep track of who sent what
-   ArrayList<String> chatHistory;
+   ArrayList<String> chatHistory = new ArrayList<String>();
 
    public Session(int[] chatters, int sessionID) throws IllegalArgumentException{
       if (chatters.length != this.chatters.length) {

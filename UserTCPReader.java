@@ -36,6 +36,8 @@ public class UserTCPReader extends Thread{
                     break;
                 }
                 this.messageQueue.add(new Message("Server", in));
+
+
                 // decrypt? ***
                 //System.out.println("tcp mssg added to queue");
             

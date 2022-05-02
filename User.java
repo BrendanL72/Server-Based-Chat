@@ -135,6 +135,9 @@ public class User {
          //CHAT SESSION SECTION
 /////////////////////////////////////////////////////////////////////////
 
+         //ArrayList to hold the chat history of a sesssion
+         List<String> chatHistory = new ArrayList<String>();
+         
          Scanner scanner = new Scanner(System.in);
          String userInput = "";
          String[] userTokens;
@@ -234,6 +237,9 @@ public class User {
                            chatMsg = chatMsg.concat(packetTokens[i] + " ");
                         }
                         System.out.println(author + ": " + chatMsg);
+
+                        chatHistory.add(author + ": " + chatMsg);
+                        //System.out.println(chatHistory);
                         //System.out.println(packetTokens[2]);
                         break;
                      case "HISTORY_RESP":
@@ -289,7 +295,7 @@ public class User {
                      case "HISTORY":
                         // USER SENDS SHOW HISTORY
                         // WRITE HISTORY_REQ CLIENTID
-
+                        System.out.println("CHAT HISTORY: " + chatHistory);
                         //***ENCRYPT PACKET
 
                         break;

@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 public class ConnectionTCPReader extends Thread{
    private BlockingQueue<Message> q;
    private Socket socket;
+   
    public ConnectionTCPReader(Socket s, BlockingQueue<Message> q) {
       this.socket = s;
       this.q = q;
@@ -21,9 +22,12 @@ public class ConnectionTCPReader extends Thread{
          String clientMessage = "";
          while (!clientMessage.equals("END_CONNECTION")) { 
             clientMessage = inStream.readLine();
+<<<<<<< HEAD
+=======
             if (clientMessage == "END_CONNECTION") {
                break;
             }
+>>>>>>> main
             q.add(new Message("Client", clientMessage));
          }
       } catch (IOException e) {
