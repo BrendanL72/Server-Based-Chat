@@ -39,7 +39,6 @@ public class Session {
    public void recordMessage(String newMessage) {
       chatHistory.add(newMessage);
    }
-
    public int[] getMembers() {
       return chatters;
    }

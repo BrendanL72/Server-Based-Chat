@@ -11,7 +11,6 @@ import java.io.PrintWriter;
 import java.lang.Thread;
 import java.net.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -82,14 +81,17 @@ public class Connection extends Thread{
                   case "CHAT":
                      //format: CHAT <session ID> <chat message>
                      int sessionID = Integer.parseInt(tokens[1]);
-                     String chatMessage = tokens[2];
+                     if (state != Server.State.chatting) {
+                        System.out.println("Ignoring chat message, user is not in a session.");
+                        break;
+                     }
                      //send message to session/other user
                         //get other user from sessions
                         int users[] = Server.getSession(sessionID).getMembers();
                         for (int userID : users) {
                            if (userID != this.clientID) {
                               //send the other user's connection the chat message
-                              messageOtherConnection(userID, chatMessage);
+                              messageOtherConnection(userID, actualMessage);
                            }
                         }
                         
@@ -116,6 +118,9 @@ public class Connection extends Thread{
                            currentSession = new Session(sessionUsers, newSessionID);
                            Server.putSessionsHashtable(newSessionID, currentSession);
                            
+                           //inform this connection's user
+                           sendClient.println("CHAT_STARTED " + newSessionID + " " + targetClientID);
+
                            //inform the other user's connection
                            messageOtherConnection(targetClientID, "SESSION_STARTED " + newSessionID + " " + this.clientID);
 
@@ -162,7 +167,9 @@ public class Connection extends Thread{
                      }
 
                      break;
-               
+
+                  case "END_CONNECTION":
+                     break;
                   default:
                      System.out.println("Unfamiliar Client Message: " + actualMessage);
                      break;
@@ -170,14 +177,18 @@ public class Connection extends Thread{
                break;
          
             case "Server":
+               
                switch (messageType) {
                   case "CHAT":
+                     System.out.println("Received chat: " + actualMessage);
                      //other client sent a chat, send it to our client
                      sendClient.println(actualMessage);
+                     break;
 
                   case "SESSION_STARTED":
                      //format SESSION_STARTED session_id clientID
                      //another client started a session with this user
+                     System.out.println("Message received " + clientID);
                      int newSessionID = Integer.parseInt(tokens[1]);
                      targetClientID = Integer.parseInt(tokens[2]);
 
@@ -207,6 +218,14 @@ public class Connection extends Thread{
                System.out.println("Unknown packet source");
                break;
          }
+      }
+
+      try {
+         socket.close();
+      } catch (IOException e) {
+         // TODO Auto-generated catch block
+         System.out.println("Error with socket close");
+         e.printStackTrace();
       }
    }
 
