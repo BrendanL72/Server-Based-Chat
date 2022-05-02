@@ -28,18 +28,20 @@ public class UserTCPReader extends Thread{
     public void run()
     {
         String in = "";
-        while(true)
-        {
-            try {
+        try {
+            while(!in.equals("END_TCP")) {
                 inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 in = inStream.readLine();
+                if (in.equals("END_TCP")) {
+                    break;
+                }
                 this.messageQueue.add(new Message("Server", in));
                 // decrypt? ***
                 //System.out.println("tcp mssg added to queue");
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            
+        }
+        } catch (IOException e) {
+        // TODO Auto-generated catch block
         }
     }
 }

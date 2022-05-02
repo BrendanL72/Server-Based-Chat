@@ -6,14 +6,15 @@ import java.util.Scanner;
 import java.util.concurrent.BlockingQueue;
 
 public class UserReader extends Thread{
-   
+   private Scanner scanner;
+
    private BlockingQueue<Message> q;
-   public UserReader(BlockingQueue<Message> q){
+   public UserReader(Scanner scanner, BlockingQueue<Message> q){
       this.q = q;
+      this.scanner = scanner;
    }
 
    public void run() {
-      Scanner scanner = new Scanner(System.in);
       String userInput = "";
       while (userInput != "Log off") {
          //System.out.print(">");
