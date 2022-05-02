@@ -16,25 +16,3 @@ Brendan Lim, Kiara Madeam, Cloyd Anacan, Thomas Rogers
 7. If connected succesfully, you should see some sort of confirmation message. If so, you may now begin typing message to each other.
 8. To end a chat session, type 'End chat' and press Enter.
 9. To end your connection to the server, type "Log off" and press Enter.
-
-# TO DO
-Update TODO
-Finish Server Connection Phase - Brendan : FINISHED
-
-Finish User Connection + Chat Phase - Kiara : FINISHED
-
-Implement Connection.java's message handling (multithreading) - Cloyd + Thomas
-
-Get it to work - all
-
------
-
-Authentifification : FINISHED
-
-Encryption : FINISHED
-
-Minor: Chat History 
-  
-Minor: Activity Timer
-
-Documentation!!!!
