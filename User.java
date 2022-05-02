@@ -135,10 +135,15 @@ public class User {
 /////////////////////////////////////////////////////////////////////////
 
          Scanner scanner = new Scanner(System.in);
-         String userInput = "";
+         //Message userInput;
+         Message nextTask = new Message();
          String[] userTokens;
          //boolean currentlyChatting = false;
          BlockingQueue<Message> q = new LinkedBlockingQueue<Message>();
+         int sessionID = 0;
+         int partnerID = -1;
+         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+
 
          System.out.println("To initiate chat, type: Chat <target user ID>");
          System.out.println("To logout, just type \"Log off\"");
@@ -153,13 +158,19 @@ public class User {
          Thread userRead = new UserReader(q);
          userRead.start();
 
-         userInput = scanner.nextLine();
+         //userInput = scanner.nextLine();
+         //System.out.println(userInput);
+         //System.out.println(q.poll().message);
 
-//         if(!userInput.isEmpty)
-//         {
-//
-//         }
-         while (!userInput.toUpperCase().equals("LOG OFF")) {
+         /**
+          * instead of user input, use Message userInput = q.take(); -> userInput.messageType.equals(server or client)
+          * String userTokens = userInput.message.split(" ")
+          * usertokens[0] -> switch blocks and such
+          */
+
+         //userInput = q.take
+
+         while (!nextTask.message.toUpperCase().equals("LOG OFF")) {
             // create both data streams
 
 
@@ -168,9 +179,7 @@ public class User {
 
             // outstream writes to server
             // instream reads from server
-            long sessionID = -1;
-            int partnerID = -1;
-            PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+
             //BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             //String[] packetTokens;
             //String[] userTokens;
@@ -191,19 +200,20 @@ public class User {
              * server writes end_notification to client
              * client displays chat ended to user
              */
-
+System.out.println("success inside loop");
             try
             {
                //q.take() throws interrupted exception e
-               Message nextTask = q.take();
+               nextTask = q.take();
+
                String messageType = nextTask.messageType;
                String input = nextTask.message;
-
+System.out.println(messageType + ", " + input);
                if(messageType.toUpperCase().equals("SERVER"))
                {
                   //***DECRYPT PACKET
-                  String[] packetTokens = message.split(" ");
-                  switch(packetTokens[0])
+                  String[] packetTokens = input.split(" ");
+                  switch(packetTokens[0].toUpperCase())
                   {
                      case "UNREACHABLE":
                         // READ UNREACHABLE
@@ -219,6 +229,7 @@ public class User {
                         // READ CHAT_REQUEST CLIENTID
                         // DISPLAY CHAT REQUEST CLIENTID
                         partnerID = Integer.valueOf(packetTokens[1]);
+                        sessionID++;
                         System.out.println("CHAT REQUEST " + partnerID);
                         break;
                      case "CHAT_STARTED":
@@ -230,7 +241,9 @@ public class User {
                      case "CHAT":
                         // READ CHAT SESSIONID MESSAGE
                         // DISPLAY @ MESSAGE
-                        System.out.println("@" + packetTokens[2]);
+                        //System.out.println("@" + packetTokens[2]);
+                        System.out.println("@" + input);
+                        //System.out.println(packetTokens[]);
                         break;
                      case "HISTORY_RESP":
                         // READ HISTORY_RESP SENDINGCLIENTID MESSAGE
@@ -239,23 +252,38 @@ public class User {
                         System.out.println(""/**CHAT HISTORY*/);
                         break;
                      default:
-
+//                        String userMssg = "";
+//
+//                        // int i = 1; ?
+//                        for (int i = 0; i < packetTokens.length; i++) {
+//                           userMssg.concat(packetTokens[i] + " ");
+//                        }
+                        //***ENCRYPT PACKET
+                        outStream.println("CHAT " + sessionID + " " + nextTask.message);
+                        System.out.println("CHAT " + sessionID + " " + nextTask.message);
                         break;
                   }
                }
                else if(messageType.toUpperCase().equals("USER")) {
-                  userTokens = message.split(" ");
-                  switch (userTokens[0]) {
+                  userTokens = input.split(" ");
+                  switch (userTokens[0].toUpperCase()) {
+                     case "LOG":
+                        // USER SENDS LOG
+                        // WRITE END_CONNECTION CLIENTID
+                        outStream.write("END_REQUEST " + userID);
+                        System.out.println("END_REQUEST " + userID);
+                        break;
                      case "END":
                         // USER SENDS END CHAT
                         // WRITE END_REQUEST SESSIONID
 
                         //***ENCRYPT PACKET
                         outStream.println("END_REQUEST " + sessionID);
+                        System.out.println("END_REQUEST " + sessionID);
                         //outStream.println(new Message());
                         break;
                      case "CHAT":
-                        // USED SENDS CHAT CLIENTID B
+                        // USER SENDS CHAT CLIENTID B
                         // WRITE CHAT_REQUEST CLIENTID MESSAGE
                         //Date d = new Date(95, 1, 15);
                         //sessionID = d.getTime();
@@ -264,19 +292,23 @@ public class User {
 
                         //***ENCRYPT PACKET
                         outStream.println("CHAT_REQUEST " + partnerID);
+                        System.out.println("CHAT_REQUEST " + partnerID);
                         break;
                      case "@":
                         // SENDING MESSAGES BETWEEN CLIENTS
                         // USER SENDS @ MESSAGE
                         // WRITE CHAT SESSIONID MESSAGE
+//
+//                        String userMssg = "";
+//
+//                        // int i = 1; ?
+//                        for (int i = 2; i < userTokens.length; i++) {
+//                           userMssg.concat(userTokens[i] + " ");
+//                        }
+//                        //***ENCRYPT PACKET
 
-                        String userMssg = "";
-
-                        for (int i = 2; i < userTokens.length; i++) {
-                           userMssg.concat(userTokens[i] + " ");
-                        }
-                        //***ENCRYPT PACKET
-                        outStream.println("CHAT " + sessionID + userMssg);
+                        outStream.println("CHAT " + sessionID + " " + input);
+                        System.out.println("CHAT " + sessionID + " " + input);
                         break;
                      case "HISTORY":
                         // USER SENDS SHOW HISTORY
@@ -286,7 +318,20 @@ public class User {
 
                         break;
                      default:
-                        //KEEP WAITING FOR USER INPUT
+                        // SENDING MESSAGES BETWEEN CLIENTS
+                        // USER SENDS @ MESSAGE
+                        // WRITE CHAT SESSIONID MESSAGE
+
+                        // input is message.message
+//                        String userMssg = "";
+//
+//                        // int i = 1; ?
+//                        for (int i = 0; i < userTokens.length; i++) {
+//                           userMssg.concat(userTokens[i] + " ");
+//                        }
+                        //***ENCRYPT PACKET
+                        outStream.println("CHAT " + sessionID + " " + input);
+                        System.out.println("CHAT " + sessionID + " " + input);
                         break;
                   }
                }

@@ -61,6 +61,7 @@ public class Connection extends Thread{
       //other parsing variables that java is being annoying about
       int targetClientID;
 
+      // messageType is not message.messageType its the first element of actualMessage.split(" ")
       while (!messageType.equals("END_CONNECTION")) {
          try {
             message = messageQueue.take();
@@ -174,7 +175,7 @@ public class Connection extends Thread{
                   case "CHAT":
                      //other client sent a chat, send it to our client
                      sendClient.println(actualMessage);
-
+                     break;
                   case "SESSION_STARTED":
                      //format SESSION_STARTED session_id clientID
                      //another client started a session with this user

@@ -22,7 +22,7 @@ public class UserTCPReader extends Thread{
     {
         this.socket = s;
         this.messageQueue = q;
-        inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        //inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
     public void run()
@@ -30,7 +30,9 @@ public class UserTCPReader extends Thread{
         while(true)
         {
             try {
-                messageQueue.add(new Message("Server", inStream.readLine()));
+                inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                String in = inStream.readLine();
+                this.messageQueue.add(new Message("Server", in));
                 // decrypt? ***
                 System.out.println("tcp mssg added to queue");
             } catch (IOException e) {
