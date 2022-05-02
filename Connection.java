@@ -11,7 +11,6 @@ import java.io.PrintWriter;
 import java.lang.Thread;
 import java.net.*;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -168,7 +167,9 @@ public class Connection extends Thread{
                      }
 
                      break;
-               
+
+                  case "END_CONNECTION":
+                     break;
                   default:
                      System.out.println("Unfamiliar Client Message: " + actualMessage);
                      break;
@@ -176,6 +177,7 @@ public class Connection extends Thread{
                break;
          
             case "Server":
+               
                switch (messageType) {
                   case "CHAT":
                      System.out.println("Received chat: " + actualMessage);
@@ -186,6 +188,7 @@ public class Connection extends Thread{
                   case "SESSION_STARTED":
                      //format SESSION_STARTED session_id clientID
                      //another client started a session with this user
+                     System.out.println("Message received " + clientID);
                      int newSessionID = Integer.parseInt(tokens[1]);
                      targetClientID = Integer.parseInt(tokens[2]);
 

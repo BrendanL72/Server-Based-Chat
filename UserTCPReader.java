@@ -27,11 +27,12 @@ public class UserTCPReader extends Thread{
 
     public void run()
     {
+        String in = "";
         while(true)
         {
             try {
                 inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                String in = inStream.readLine();
+                in = inStream.readLine();
                 this.messageQueue.add(new Message("Server", in));
                 // decrypt? ***
                 //System.out.println("tcp mssg added to queue");
