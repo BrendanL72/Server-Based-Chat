@@ -96,6 +96,8 @@ public class Connection extends Thread{
                         }
                         
                      //add message to chat history
+                     Server.getSession(sessionID).chatHistory.add(actualMessage);
+
                      break;
 
                   case "CHAT_REQUEST":
@@ -136,7 +138,8 @@ public class Connection extends Thread{
 
                   case "HISTORY_REQ":
                      //format: HISTORY_REQ <target client ID>
-
+                     sessionID = Integer.parseInt(tokens[1]);
+                     System.out.println(Server.getSession(sessionID).chatHistory);
                      //determine target id
 
                      //get access to session history

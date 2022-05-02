@@ -34,6 +34,8 @@ public class UserTCPReader extends Thread{
                 inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 in = inStream.readLine();
                 this.messageQueue.add(new Message("Server", in));
+
+
                 // decrypt? ***
                 //System.out.println("tcp mssg added to queue");
             } catch (IOException e) {
