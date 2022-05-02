@@ -176,7 +176,7 @@ public class Server {
                      UDPMethods.sendUDPPacket("AUTH_FAIL", serverSocket, receivedAddress, receivedPort);
 
                      //set user to offline 
-                     clientStates.put(clientID, State.offline);
+                     clientStates.remove(clientID);
                   }
                   break;
 

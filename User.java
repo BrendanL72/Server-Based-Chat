@@ -145,7 +145,7 @@ public class User {
          BlockingQueue<Message> q = new LinkedBlockingQueue<Message>();
 
          System.out.println("To initiate chat, type: Chat <target user ID>");
-         System.out.println("To logout, just type \"Log off\"");
+         System.out.println("To logout, just type: \"LOG OFF\"");
 
          /**
           * this is where i've started implementing the chat phase
@@ -154,7 +154,7 @@ public class User {
          // thread for user input
          Thread tcpRead = new UserTCPReader(socket, q);
          tcpRead.start();
-         Thread userRead = new UserReader(q);
+         Thread userRead = new UserReader(scanner, q);
          userRead.start();
          long sessionID = -1;
          int partnerID = -1;
@@ -248,7 +248,6 @@ public class User {
                         System.out.println("CHAT HISTORY: *** NOT YET WORKING");
                         System.out.println(""/**CHAT HISTORY*/);
                         break;
-                     
                      default:
                         System.out.println("Unrecognized packet type: " + input);
                         break;
@@ -256,7 +255,7 @@ public class User {
                }
                else if(messageType.equals("User")) {
                   userTokens = input.split(" ");
-                  switch (userTokens[0]) {
+                  switch (userTokens[0].toUpperCase()) {
                      case "END":
                         // USER SENDS END CHAT
                         // WRITE END_REQUEST SESSIONID
@@ -302,9 +301,9 @@ public class User {
                         break;
 
                      case "LOG":
-                        System.out.println(input);
                         if (input.equals("LOG OFF")) {
                            outStream.println("END_CONNECTION");
+                           System.out.println("Logging off...");
                            break;
                         }
                         break;
@@ -328,9 +327,9 @@ public class User {
                System.out.println(e);
             }
          }
-
+         System.out.println("Ending session, please press Enter again to exit.");
          scanner.close();
-         socket.close();
+         System.exit(0);
 
       } catch (SocketException e) {
          // TODO Auto-generated catch block

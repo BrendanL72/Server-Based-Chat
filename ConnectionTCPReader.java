@@ -19,14 +19,19 @@ public class ConnectionTCPReader extends Thread{
    public void run() {
       try {
          BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-         String clientMessage;
-         while (true) { 
+         String clientMessage = "";
+         while (!clientMessage.equals("END_CONNECTION")) { 
             clientMessage = inStream.readLine();
+<<<<<<< HEAD
+=======
+            if (clientMessage == "END_CONNECTION") {
+               break;
+            }
+>>>>>>> main
             q.add(new Message("Client", clientMessage));
          }
       } catch (IOException e) {
          // TODO Auto-generated catch block
-         e.printStackTrace();
       }
       
       

@@ -222,6 +222,8 @@ public class Connection extends Thread{
                break;
          }
       }
+      //send end packet
+      sendClient.println("END_TCP");
 
       try {
          socket.close();
