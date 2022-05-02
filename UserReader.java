@@ -16,11 +16,7 @@ public class UserReader extends Thread{
       Scanner scanner = new Scanner(System.in);
       String userInput = "";
       while (userInput != "Log off") {
-<<<<<<< HEAD
          //System.out.print(">");
-=======
-         System.out.print("> ");
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
          //read inputs
          userInput = scanner.nextLine();
          //send user input to queue

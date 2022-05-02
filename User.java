@@ -11,8 +11,8 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
-
+import java.util.*;
+import java.util.concurrent.*;
 
 public class User {
    
@@ -68,14 +68,15 @@ public class User {
          rcvTokens = rcvMessage.split(" ");
          rcvMessageType = rcvTokens[0];
 
-         System.out.println(rcvMessage);
+         System.out.println(rcvMessage + "%");
          if (!UDPMethods.isExpectedMessage("CHALLENGE", 2, rcvMessage)) {
             System.exit(0);
          }
 
          //generate response using auth. for now it just returns the number it received
          int rand = Integer.parseInt(rcvTokens[1]);
-         int response = rand;
+         A3 hasher = new A3();
+         String response = hasher.hash(secretKey, rand);
 
          //respond with RESPONSE(Res)
          message = "RESPONSE " + userID + " " + response;
@@ -113,6 +114,13 @@ public class User {
                break;
          }
 
+         // dont need this anymore?????
+         //establish TCP connection and send CONNECT
+         System.out.println("Attempting TCP connection at " + destIPaddress + ":" + newPortNum);
+         Socket socket = new Socket(destIPaddress, newPortNum);
+         //PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
+         //BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
          //wait for connected response message
          outBuf = new byte[512];
          receivedPacket = new DatagramPacket(outBuf, outBuf.length);
@@ -120,62 +128,22 @@ public class User {
          rcvMessage = UDPMethods.byteToString(outBuf);
          System.out.println(rcvMessage);
 
-         //establish TCP connection and send CONNECT
-         System.out.println("Attempting TCP connection...");
-         Socket socket = new Socket(destIPaddress, newPortNum);
-         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
-         BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
          //wait for CONNECTED signal
          System.out.println("TCP connection successful.");
 
+/////////////////////////////////////////////////////////////////////////
          //CHAT SESSION SECTION
+/////////////////////////////////////////////////////////////////////////
+
          Scanner scanner = new Scanner(System.in);
-         //Message userInput;
-         Message nextTask = new Message();
+         String userInput = "";
          String[] userTokens;
-<<<<<<< Updated upstream
-         boolean currentlyChatting = false;
-=======
          //boolean currentlyChatting = false;
          BlockingQueue<Message> q = new LinkedBlockingQueue<Message>();
-         int sessionID = 0;
-         int partnerID = -1;
-         PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
-
->>>>>>> Stashed changes
 
          System.out.println("To initiate chat, type: Chat <target user ID>");
          System.out.println("To logout, just type \"Log off\"");
 
-<<<<<<< Updated upstream
-         while (!userInput.equals("Log off")) {
-            System.out.print(">");
-            userInput = scanner.nextLine();
-            userTokens = userInput.split(" ");
-            if (userTokens[0] == "Chat") {
-               if (currentlyChatting) {
-                  System.out.println("You're already chatting with someone!");
-                  break;
-               }
-               int destID = Integer.parseInt(userTokens[1]);
-               //send request to server
-               outStream.println("CHAT_REQUEST " + destID);
-               
-               //wait for server response
-               message = inStream.readLine();
-               String messageType = message.split(" ")[0];
-               if (messageType.equals("CHAT_STARTED")) {
-                  //chat started
-                  System.out.println("Chat started");
-                  currentlyChatting = true;
-               }
-               else if (messageType.equals("UNREACHABLE")) {
-                  System.out.println("Sorry, user " + destID + " was not available.");
-               }
-               else {
-                  System.out.println("ERROR: Server sent invalid message. Expected CHAT_STARTED or UNREACHABLE");
-=======
          /**
           * this is where i've started implementing the chat phase
           */
@@ -189,7 +157,6 @@ public class User {
          int partnerID = -1;
          String input = "";
 
-<<<<<<< HEAD
          PrintWriter outStream = new PrintWriter(socket.getOutputStream(), true);
 
 //         if(!userInput.isEmpty)
@@ -201,30 +168,6 @@ public class User {
             // instream reads from server
             
             
-=======
-         //userInput = scanner.nextLine();
-         //System.out.println(userInput);
-         //System.out.println(q.poll().message);
-
-         /**
-          * instead of user input, use Message userInput = q.take(); -> userInput.messageType.equals(server or client)
-          * String userTokens = userInput.message.split(" ")
-          * usertokens[0] -> switch blocks and such
-          */
-
-         //userInput = q.take
-
-         while (!nextTask.message.toUpperCase().equals("LOG OFF")) {
-            // create both data streams
-
-
-            // create UserTCPReader thread (listening thread)
-            //new UserTCPReader(socket);
-
-            // outstream writes to server
-            // instream reads from server
-
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
             //BufferedReader inStream = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             //String[] packetTokens;
             //String[] userTokens;
@@ -245,29 +188,19 @@ public class User {
              * server writes end_notification to client
              * client displays chat ended to user
              */
-System.out.println("success inside loop");
+
             try
             {
                //q.take() throws interrupted exception e
-               nextTask = q.take();
-
+               Message nextTask = q.take();
                String messageType = nextTask.messageType;
-<<<<<<< HEAD
                input = nextTask.message;
 
-=======
-               String input = nextTask.message;
-System.out.println(messageType + ", " + input);
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                if(messageType.toUpperCase().equals("SERVER"))
                {
                   //***DECRYPT PACKET
                   String[] packetTokens = input.split(" ");
-<<<<<<< HEAD
                   switch(packetTokens[0])
-=======
-                  switch(packetTokens[0].toUpperCase())
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                   {
                      case "UNREACHABLE":
                         // READ UNREACHABLE
@@ -283,7 +216,6 @@ System.out.println(messageType + ", " + input);
                         // READ CHAT_REQUEST CLIENTID
                         // DISPLAY CHAT REQUEST CLIENTID
                         partnerID = Integer.valueOf(packetTokens[1]);
-                        sessionID++;
                         System.out.println("CHAT REQUEST " + partnerID);
                         break;
                      case "CHAT_STARTED":
@@ -295,7 +227,6 @@ System.out.println(messageType + ", " + input);
                      case "CHAT":
                         // READ CHAT SESSIONID MESSAGE
                         // DISPLAY @ MESSAGE
-<<<<<<< HEAD
                         String chatMsg = "";
                         String author = packetTokens[2];
                         //System.out.println(Arrays.toString(packetTokens));
@@ -304,11 +235,6 @@ System.out.println(messageType + ", " + input);
                         }
                         System.out.println(author + ": " + chatMsg);
                         //System.out.println(packetTokens[2]);
-=======
-                        //System.out.println("@" + packetTokens[2]);
-                        System.out.println("@" + input);
-                        //System.out.println(packetTokens[]);
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                         break;
                      case "HISTORY_RESP":
                         // READ HISTORY_RESP SENDINGCLIENTID MESSAGE
@@ -318,7 +244,6 @@ System.out.println(messageType + ", " + input);
                         break;
                      
                      default:
-<<<<<<< HEAD
                         System.out.println("Unrecognized packet type: " + input);
                         break;
                   }
@@ -326,40 +251,16 @@ System.out.println(messageType + ", " + input);
                else if(messageType.equals("User")) {
                   userTokens = input.split(" ");
                   switch (userTokens[0]) {
-=======
-//                        String userMssg = "";
-//
-//                        // int i = 1; ?
-//                        for (int i = 0; i < packetTokens.length; i++) {
-//                           userMssg.concat(packetTokens[i] + " ");
-//                        }
-                        //***ENCRYPT PACKET
-                        outStream.println("CHAT " + sessionID + " " + nextTask.message);
-                        System.out.println("CHAT " + sessionID + " " + nextTask.message);
-                        break;
-                  }
-               }
-               else if(messageType.toUpperCase().equals("USER")) {
-                  userTokens = input.split(" ");
-                  switch (userTokens[0].toUpperCase()) {
-                     case "LOG":
-                        // USER SENDS LOG
-                        // WRITE END_CONNECTION CLIENTID
-                        outStream.write("END_REQUEST " + userID);
-                        System.out.println("END_REQUEST " + userID);
-                        break;
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                      case "END":
                         // USER SENDS END CHAT
                         // WRITE END_REQUEST SESSIONID
 
                         //***ENCRYPT PACKET
                         outStream.println("END_REQUEST " + sessionID);
-                        System.out.println("END_REQUEST " + sessionID);
                         //outStream.println(new Message());
                         break;
                      case "CHAT":
-                        // USER SENDS CHAT CLIENTID B
+                        // USED SENDS CHAT CLIENTID B
                         // WRITE CHAT_REQUEST CLIENTID MESSAGE
                         //Date d = new Date(95, 1, 15);
                         //sessionID = d.getTime();
@@ -370,22 +271,12 @@ System.out.println(messageType + ", " + input);
 
                         //***ENCRYPT PACKET
                         outStream.println("CHAT_REQUEST " + partnerID);
-                        System.out.println("CHAT_REQUEST " + partnerID);
                         break;
                      case "@":
                         // SENDING MESSAGES BETWEEN CLIENTS
                         // USER SENDS @ MESSAGE
                         // WRITE CHAT SESSIONID MESSAGE
-//
-//                        String userMssg = "";
-//
-//                        // int i = 1; ?
-//                        for (int i = 2; i < userTokens.length; i++) {
-//                           userMssg.concat(userTokens[i] + " ");
-//                        }
-//                        //***ENCRYPT PACKET
 
-<<<<<<< HEAD
                         /* System.out.println("Sending message...");
 
                         String userMssg = "";
@@ -395,10 +286,6 @@ System.out.println(messageType + ", " + input);
                         }
                         //***ENCRYPT PACKET
                         outStream.println("CHAT " + sessionID + input); */
-=======
-                        outStream.println("CHAT " + sessionID + " " + input);
-                        System.out.println("CHAT " + sessionID + " " + input);
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                         break;
                      case "HISTORY":
                         // USER SENDS SHOW HISTORY
@@ -416,7 +303,6 @@ System.out.println(messageType + ", " + input);
                         }
                         break;
                      default:
-<<<<<<< HEAD
                         //KEEP WAITING FOR USER INPUT
 
                         String userMssg = "";
@@ -427,39 +313,16 @@ System.out.println(messageType + ", " + input);
                         //***ENCRYPT PACKET
                         
                         outStream.println("CHAT " + sessionID + " " + userID + " " + input);
-=======
-                        // SENDING MESSAGES BETWEEN CLIENTS
-                        // USER SENDS @ MESSAGE
-                        // WRITE CHAT SESSIONID MESSAGE
-
-                        // input is message.message
-//                        String userMssg = "";
-//
-//                        // int i = 1; ?
-//                        for (int i = 0; i < userTokens.length; i++) {
-//                           userMssg.concat(userTokens[i] + " ");
-//                        }
-                        //***ENCRYPT PACKET
-                        outStream.println("CHAT " + sessionID + " " + input);
-                        System.out.println("CHAT " + sessionID + " " + input);
->>>>>>> 2d6e8100699aec68d757975e1172503738d378af
                         break;
                   }
->>>>>>> Stashed changes
                }
             }
-            else if (userInput == "Log off") {
-               break;
-            }
-            else if (userInput == "End chat"){
-               //end connection with user B
-               
-            }
-            else {
-               //normal chat (change this)
-               outStream.println(userInput);
+            catch(InterruptedException e)
+            {
+               System.out.println(e);
             }
          }
+
          scanner.close();
          socket.close();
 
@@ -476,4 +339,91 @@ System.out.println(messageType + ", " + input);
       
    }
 
+
+   // lol might not need this either
+// kidding maybe make this return a string
+   public static String sendPacket(Message msg)
+   {
+//   try{
+      // encrypt tcp mssg
+
+      //A8 encrypt = new A8();
+      //int key = encrypt.cipherKey(secretKey, rand)
+
+      // write object to server with tcp
+
+
+      return "-1";
+//   }
+//   catch()
+//   {
+//
+//   }
+      // once message is done processing, remove from queue (someone else remind me of the syntax for that?)
+   }
+
+   // kidding maybe we dont need this
+   // kidding maybe make this return a string
+   public static String receivePacket(Message msg)
+   {
+//   try{
+      // read from server
+      // decrypt packet msg
+
+      // A8 decrypt = newA8();
+      // int key = decrypt.cipherKey(secretKey, rand)
+
+      // return decrypted msg?
+
+
+      return "-1";
+//   }
+//   catch()
+//   {
+//
+//   }
+   }
 }
+
+
+
+/*
+while (!userInput.equals("Log off")) {
+   userInput = scanner.nextLine();
+   userTokens = userInput.split(" ");
+            if (userTokens[0].equalsIgnoreCase("Chat")) {
+      if (currentlyChatting) {
+         System.out.println("You're already chatting with someone!");
+         break;
+      }
+      int destID = Integer.parseInt(userTokens[1]);
+      //send request to server
+      outStream.println("CHAT_REQUEST " + destID);
+      System.out.println("SENT CHAT REQUEST ");
+      //wait for server response
+      message = inStream.readLine();
+      String messageType = message.split(" ")[0];
+      if (messageType.equals("CHAT_STARTED")) {
+         //chat started
+         System.out.println("Chat started");
+         currentlyChatting = true;
+      }
+      else if (messageType.equals("UNREACHABLE")) {
+         System.out.println("Sorry, user " + destID + " was not available.");
+      }
+      else {
+         System.out.println("ERROR: Server sent invalid message. Expected CHAT_STARTED or UNREACHABLE");
+      }
+   }
+            else if (userInput == "Log off") {
+      break;
+   }
+            else if (userInput == "End chat"){
+      //end connection with user B
+
+   }
+            else {
+      //normal chat (change this)
+      outStream.println(userInput);
+   }
+}*/

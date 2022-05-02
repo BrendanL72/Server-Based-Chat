@@ -9,8 +9,6 @@
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
-import javax.sound.midi.SysexMessage;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.File;
@@ -22,28 +20,38 @@ public class Server {
       offline, wait_challenge, wait_auth, connecting, connected, wait_chat, chatting
    }
 
+
+   //keep track of each potential client's connection state. (Client ID, Current State of client)
+   private static Hashtable <Integer, State> clientStates = new Hashtable<>(); 
+
+   //Keep track of all chat histories (Session ID, Session)
+   private static Hashtable<Integer, Session> sessions = new Hashtable<>();
+   static int sessionCounter = 0;
+
+   //Keeps track of all TCP connections made (clientID, Connection)
+   protected static Hashtable<Integer, Connection> activeConnections = new Hashtable<>();
+
    public static void main(String[] args) {
       final int MAX_ID = 1000000;
       final int MAX_SECRET_KEY = 1000000;
 
-      //keep track of each potential client's connection state. (Client ID, Current State of client)
-      Hashtable <Integer, State> clientStates = new Hashtable<>(); 
+     
       //subscirbers keeps track of valid client IDs and their corresponding secret keys. (Client ID, Secret Key)
       Hashtable<Integer, Integer> subscribers = new Hashtable<>();
 
-      //Keep track of all chat histories (Session ID, Session)
-      Hashtable<Integer, Session> sessions = new Hashtable<>();
+      
       //create a semaphore for each session to avoid collisions (Session ID, Semaphore)
       Hashtable<Integer, Semaphore> sessionSemaphores = new Hashtable<>();
 
       //Keep track of all authenticated connecting clients
       Hashtable<InetSocketAddress, Integer> connectingClients = new Hashtable<>();
 
-      //keeps track of all cookies that have been sent out and 
+      //keeps track of all cookies that have been sent out
       Hashtable<Integer, Integer> cookies = new Hashtable<>();
 
       final int portNumber = 4445;
-      int TCPportnum = portNumber;
+      int TCPportnum = portNumber + 1;
+      int newTCPPortNum = TCPportnum;
 
       //read in the list of valid subscribers to the server
       try {
@@ -69,6 +77,7 @@ public class Server {
       //set up server
       try {
          DatagramSocket serverSocket = new DatagramSocket(portNumber);
+         ServerSocket TCPSocket = new ServerSocket(TCPportnum);
          printServerInfo(serverSocket);
 
          DatagramPacket receivedPacket;
@@ -125,7 +134,8 @@ public class Server {
                      subscribers.put(clientID, secretKey);
                      //send CHALLENGE <rand>
                      //TODO: implement rand properly idk
-                     int rand = secretKey;
+                     int rand = (int) (Math.random() * 1000);
+                     cookies.put(clientID, rand);
                      UDPMethods.sendUDPPacket("CHALLENGE " + rand, serverSocket, receivedAddress, receivedPort);
 
                      //set user to waiting for authentification
@@ -143,14 +153,20 @@ public class Server {
                      throw new Exception(message + " has insufficient tokens for " + "RESPONSE");
                   }
                   int clientID = Integer.parseInt(tokens[1]);
-                  int resp = Integer.parseInt(tokens[2]);
+                  String resp = tokens[2];
+
+                  //get hashedKey to compare to response
+                  int secretKey = subscribers.get(clientID);
+                  A3 hasher = new A3();
+                  System.out.println("cookies int: " + cookies.get(clientID));
+                  String hashedKey = hasher.hash(secretKey, cookies.get(clientID));
+
                   //determine if response is valid or not. For now it's gonna be if the secret key matches
-                  if (resp == subscribers.get(clientID)) {
-                     //generate random cookie
-                     int rand = (int) (Math.random() * 1000);
-                     cookies.put(rand, clientID);
+                  if (resp.equals(hashedKey)) {
+                     
                      //send AUTH_SUCCESS
-                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + rand + " " + portNumber, serverSocket, receivedAddress, receivedPort);
+                     newTCPPortNum += 1;
+                     UDPMethods.sendUDPPacket("AUTH_SUCCESS " + cookies.get(clientID) + " " + newTCPPortNum, serverSocket, receivedAddress, receivedPort);
                      //set user to connecting 
                      clientStates.put(clientID, State.connecting);
                      connectingClients.put(new InetSocketAddress(receivedAddress, receivedPort), clientID);
@@ -166,22 +182,31 @@ public class Server {
 
                case "CONNECT":
                   //format: CONNECT <rand cookie>
-                  //TODO: change connectedClientID to get the 
-                  TCPportnum += 1;
-                  System.out.println("hello");
+                  //TODO: change connectedClientID to be based on rand cookies
                   InetSocketAddress thingy = new InetSocketAddress(receivedAddress, receivedPort);
                   int connectedClientID = connectingClients.get(thingy);
-                  System.out.println("hello");
-                  Socket clientSocket = new Socket(receivedAddress, receivedPort);
-                  int secretKey = subscribers.get(connectedClientID);
-                  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
-                  newTCPConnection.start();
+
                   //send CONNECTED and create TCP connection and thread
+                  ServerSocket newTCPSocket = new ServerSocket(newTCPPortNum);
                   UDPMethods.sendUDPPacket("CONNECTED", serverSocket, receivedAddress, receivedPort);
+                  Socket clientSocket = newTCPSocket.accept();
+                  secretKey = subscribers.get(connectedClientID);
+                  
+                  
+
+                //  Thread newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  Connection newTCPConnection = new Connection(clientSocket, connectedClientID, secretKey);
+                  Thread thread = new Thread(newTCPConnection);
+
+                  //Add the Connection object to active connections hashtable
+                  activeConnections.put(connectedClientID, newTCPConnection);
+
+                  //run the thread
+                  thread.start();
                   
                   //set user to connected
                   clientStates.put(connectedClientID, State.connected);
-                  connectingClients.remove(new InetSocketAddress(receivedAddress, receivedPort));
+                  
                   break;
             
                default:
@@ -192,11 +217,12 @@ public class Server {
             }
          }
          System.out.println("Closing server socket...");
+         TCPSocket.close();
          serverSocket.close();
 
       } catch (Exception e) {
          //TODO: handle exception
-         System.out.println("Problem?");
+         System.out.println(e);
       }
    }
 
@@ -214,5 +240,46 @@ public class Server {
       System.out.println("New client connected from: " + clientIP);
       
    }
+
+   //Getter for the clientStates hashtable
+   public static Hashtable<Integer, State> getClientStatesHashtable(){
+      return clientStates;
+   }
+
+   //Getter for a state in the clientStates hashtable
+   public static State getClientStatesHashtable(int clinetID){
+      return clientStates.get(clinetID);
+   }
+
+   //Putter for the clientStates hashtable
+   public static void putClientStatesHashtable(int clientID, State state){
+      clientStates.put(clientID, state);
+   }
    
+   //Putter for the sessions hashtable
+   public static void putSessionsHashtable(int value, Session session){
+      sessions.put(value, session);
+   }
+
+   //Getter for an active connection
+   public static Connection getActiveConnection(int clientID){
+      return activeConnections.get(clientID);
+   }
+
+   public static Server.State getUserState(int clientID) {
+      //get thread
+      if (getActiveConnection(clientID) == null) {
+         return Server.State.offline;
+      }
+      return getActiveConnection(clientID).getUserState();
+   } 
+
+   public static Session getSession(int sessionID) {
+      return sessions.get(sessionID);
+   }
+
+   public static Set<Integer> getSessionsIDs() {
+      return sessions.keySet();
+   }
+
 }
