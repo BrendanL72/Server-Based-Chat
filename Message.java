@@ -1,7 +1,12 @@
 public class Message {
    
-    String message;
-    String messageType;
+    public String message;
+    public String messageType;
+
+    public Message() {
+        this.message = "";
+        this.message = "";
+    }
 
     public Message(String source, String m)
     {
