@@ -296,7 +296,7 @@ public class User {
                      case "HISTORY":
                         // USER SENDS SHOW HISTORY
                         // WRITE HISTORY_REQ CLIENTID
-                        System.out.println(chatHistory);
+                        System.out.println("CHAT HISTORY: " + chatHistory);
                         //***ENCRYPT PACKET
 
                         break;
