@@ -22,12 +22,9 @@ public class ConnectionTCPReader extends Thread{
          String clientMessage = "";
          while (!clientMessage.equals("END_CONNECTION")) { 
             clientMessage = inStream.readLine();
-<<<<<<< HEAD
-=======
             if (clientMessage == "END_CONNECTION") {
                break;
             }
->>>>>>> main
             q.add(new Message("Client", clientMessage));
          }
       } catch (IOException e) {
