@@ -1,3 +1,4 @@
+package src;
 import java.util.concurrent.BlockingQueue;
 
 public class TestThread extends Thread{

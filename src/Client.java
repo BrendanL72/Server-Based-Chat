@@ -1,3 +1,4 @@
+package src;
 
 /*
    Client represents any User that wishes to properly connect to the server

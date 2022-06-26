@@ -1,3 +1,4 @@
+package src;
 /*
    Connection represents the server-side handling of a client's chat phase.
    It is created by the server when a new client successfully connects to the server and the server creates a TCP sockett to communicate with them

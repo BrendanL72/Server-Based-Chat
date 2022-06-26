@@ -1,3 +1,4 @@
+package src;
 public class A8 {
 
     public static int cipherKey(int secretKey, int rand)

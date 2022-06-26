@@ -1,3 +1,4 @@
+package src;
 /*
    UserReader is created by User to read in chat messages entered by the user.
 */

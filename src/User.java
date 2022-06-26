@@ -1,3 +1,4 @@
+package src;
 /*
    User is the client-side part of the chat.
    User connects to the server and communicates with it using various messages 
