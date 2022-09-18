@@ -22,6 +22,3 @@ If that does not work, try compiling the file using javac Server.java
 7. If connected succesfully, you should see some sort of confirmation message. If so, you may now begin typing message to each other.
 8. To end a chat session, type <code>End chat</code> and press Enter.
 9. To end your connection to the server, type <code>Log off</code> and press Enter.
-
-## How to Use
-*write this section*
